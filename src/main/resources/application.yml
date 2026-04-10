@@ -7,10 +7,26 @@ spring:
     url: jdbc:mysql://localhost:3306/maiko_ai_code_mother?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000ms
 server:
   port: 8123
   servlet:
     context-path: /api
+
+# 微信公众号配置
+wx:
+  mp:
+    app-id: wx81ec9a41a57e8ff6                      # 替换为你的微信公众号AppID
+    secret: 9843726ca27e9c86fc5b5e41fda99b2e       # 替换为你的微信公众号AppSecret
+#    token: 123456
+#    redirect-uri: http://127.0.0.1:8123
+    redirect-url: www.baidu.com
 
 # springdoc-openapi
 springdoc:

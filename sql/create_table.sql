@@ -16,14 +16,18 @@ create table if not exists user
     userAvatar   varchar(1024)                          null comment '用户头像',
     userProfile  varchar(512)                           null comment '用户简介',
     userRole     varchar(256) default 'user'            not null comment '用户角色：user/admin',
-
-
+    phone        varchar(20)                            null comment '手机号（用于验证码登录）',
+    unionId      varchar(256)                           null comment '微信开放平台UnionID（用于跨应用识别用户）',
+    openId       varchar(256)                           null comment '微信公众号OpenID',
     editTime     datetime     default CURRENT_TIMESTAMP not null comment '编辑时间',
     createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete     tinyint      default 0                 not null comment '是否删除',
     UNIQUE KEY uk_userAccount (userAccount),
-    INDEX idx_userName (userName)
+    UNIQUE KEY uk_phone (phone),
+    UNIQUE KEY uk_unionId (unionId),
+    INDEX idx_userName (userName),
+    INDEX idx_openId (openId)
 ) comment '用户' collate = utf8mb4_unicode_ci;
 
 --  扩展设计
