@@ -14,6 +14,8 @@ spring:
       port: 6379
       database: 0
       timeout: 5000ms
+  profiles:
+    active: local
 server:
   port: 8123
   servlet:

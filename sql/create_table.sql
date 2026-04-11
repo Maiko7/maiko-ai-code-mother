@@ -15,7 +15,7 @@ create table if not exists user
     userName     varchar(256)                           null comment '用户昵称',
     userAvatar   varchar(1024)                          null comment '用户头像',
     userProfile  varchar(512)                           null comment '用户简介',
-    userRole     varchar(256) default 'user'            not null comment '用户角色：user/admin',
+    userRole     varchar(256) default 'user'            not null comment '用户角色：user/admin/ban/vip/editor/partner',
     phone        varchar(20)                            null comment '手机号（用于验证码登录）',
     unionId      varchar(256)                           null comment '微信开放平台UnionID（用于跨应用识别用户）',
     openId       varchar(256)                           null comment '微信公众号OpenID',
