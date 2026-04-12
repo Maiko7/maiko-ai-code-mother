@@ -2,9 +2,11 @@ package com.maiko.maikoaicodemother.service;
 
 import com.maiko.maikoaicodemother.model.dto.app.AppQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.App;
+import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.vo.AppVO;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -39,5 +41,21 @@ public interface AppService extends IService<App> {
      */
     List<AppVO> getAppVOList(List<App> appList);
 
+    /**
+     * 通过对话方式生成代码（流式返回）
+     *
+     * @param appId 应用ID，指定要生成代码的应用
+     * @param message 用户输入的对话消息
+     * @param loginUser 当前登录用户信息
+     * @return Flux<String> 流式返回生成的代码片段
+     */
+    Flux<String> chatToGenCode(Long appId, String message, User loginUser);
 
+    /**
+     * 应用部署
+     * @param appId 应用ID
+     * @param loginUser 当前登录用户信息
+     * @return
+     */
+    String deployApp(Long appId, User loginUser);
 }

@@ -2,6 +2,7 @@ package com.maiko.maikoaicodemother.controlller;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.maiko.maikoaicodemother.annotation.AuthCheck;
 import com.maiko.maikoaicodemother.common.BaseResponse;
 import com.maiko.maikoaicodemother.common.DeleteRequest;
@@ -11,10 +12,7 @@ import com.maiko.maikoaicodemother.constant.UserConstant;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.exception.ThrowUtils;
-import com.maiko.maikoaicodemother.model.dto.app.AppAddRequest;
-import com.maiko.maikoaicodemother.model.dto.app.AppAdminUpdateRequest;
-import com.maiko.maikoaicodemother.model.dto.app.AppQueryRequest;
-import com.maiko.maikoaicodemother.model.dto.app.AppUpdateRequest;
+import com.maiko.maikoaicodemother.model.dto.app.*;
 import com.maiko.maikoaicodemother.model.entity.App;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
@@ -27,10 +25,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 应用控制层
@@ -47,6 +50,87 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+
+
+    /**
+     * 应用聊天生成代码（流式 SSE）
+     *
+     * 关于 produces = MediaType.TEXT_EVENT_STREAM_VALUE 的作用：
+     * 这个参数用于指定接口响应的媒体类型（Content-Type），具体说明如下：
+     * 📌 作用：
+     * 声明返回数据的格式为 text/event-stream（SSE，Server-Sent Events）
+     * 告诉浏览器和客户端：这是一个流式接口，数据会分批持续返回，而不是一次性返回
+     * 🎯 为什么需要它？
+     * 流式传输：对于 AI 代码生成这种耗时操作，可以实时返回生成的每一段内容，用户体验更好
+     * 浏览器识别：浏览器知道这是事件流，可以保持连接打开，持续接收数据
+     * Content-Type 设置：自动设置响应头为 Content-Type: text/event-stream
+     * 💡 与普通接口的区别：
+     * 普通接口（如 @PostMapping）：一次性返回完整 JSON 响应
+     * SSE 接口（加了 produces）：持续不断地推送数据片段，适合实时场景
+     * 在这个例子中，AI 生成代码是逐字或逐段输出的，使用 SSE 可以让前端实时显示生成进度，就像看到 AI 在"打字"一样。
+     *
+     * @param appId   应用 ID
+     * @param message 用户消息
+     * @param request 请求对象
+     * @return 生成结果流
+     */
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "聊天生成代码", description = "通过对话方式流式生成代码（SSE），实时返回生成进度")
+    // 它这里为什么没封装对象，因为是get请求
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId, @RequestParam String message, HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务生成代码（流式）
+        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        // 转换为 ServerSentEvent 格式。将 AI 返回的原始文本片段，转换成前端能识别的标准 JSON 格式。
+        return contentFlux
+                .map(chunk -> {
+                    // 将内容包装成JSON对象
+                    /**
+                     * 它这里为什么只是一个d而不是data，你想啊如果每次都是一个data那比返回的字符还多点
+                     * 比如data: {"d": "你"}那你搞个data: {"data": "你"} 那不是data比你还多。
+                     */
+                    Map<String, String> wrapper = Map.of("d", chunk);
+                    String jsonData = JSONUtil.toJsonStr(wrapper);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                // 这段代码的作用是在数据流的最后，给前端发一个“结束信号”。
+                .concatWith(Mono.just(
+                        // 发送结束事件
+                        ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build()
+                ));
+    }
+
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    @Operation(summary = "部署应用", description = "将应用部署到服务器，返回部署后的访问地址")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务部署应用
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
+    }
+
+
 
     /**
      * 创建应用
