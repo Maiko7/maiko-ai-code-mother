@@ -1,4 +1,4 @@
-package com.maiko.maikoaicodemother.model.dto;
+package com.maiko.maikoaicodemother.model.dto.user;
 
 import lombok.Data;
 

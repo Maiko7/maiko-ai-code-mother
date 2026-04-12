@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类
+ * 应用实体类
  *
  * @author 代码卡壳Maiko7
  */
@@ -23,73 +23,63 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("user")
-public class User implements Serializable {
+@Table("app")
+public class App implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     /**
      * id
-     * 这种默认自增的id生成策略有个问题，很容易被人爬虫
      */
-//    @Id(keyType = KeyType.Auto)
     @Id(keyType = KeyType.Generator, value = KeyGenerators.snowFlakeId)
     private Long id;
 
     /**
-     * 账号
+     * 应用名称
      */
-    @Column("userAccount")
-    private String userAccount;
+    @Column("appName")
+    private String appName;
 
     /**
-     * 密码
+     * 应用封面
      */
-    @Column("userPassword")
-    private String userPassword;
+    private String cover;
 
     /**
-     * 用户昵称
+     * 应用初始化的 prompt
      */
-    @Column("userName")
-    private String userName;
+    @Column("initPrompt")
+    private String initPrompt;
 
     /**
-     * 用户头像
+     * 代码生成类型（枚举）
      */
-    @Column("userAvatar")
-    private String userAvatar;
+    @Column("codeGenType")
+    private String codeGenType;
 
     /**
-     * 用户简介
+     * 部署标识
      */
-    @Column("userProfile")
-    private String userProfile;
+    @Column("deployKey")
+    private String deployKey;
 
     /**
-     * 用户角色：user/admin
+     * 部署时间
      */
-    @Column("userRole")
-    private String userRole;
+    @Column("deployedTime")
+    private LocalDateTime deployedTime;
 
     /**
-     * 手机号（用于验证码登录）
+     * 优先级
      */
-    @Column("phone")
-    private String phone;
+    private Integer priority;
 
     /**
-     * 微信开放平台UnionID（用于跨应用识别用户）
+     * 创建用户id
      */
-    @Column("unionId")
-    private String unionId;
-
-    /**
-     * 微信公众号OpenID
-     */
-    @Column("openId")
-    private String openId;
+    @Column("userId")
+    private Long userId;
 
     /**
      * 编辑时间

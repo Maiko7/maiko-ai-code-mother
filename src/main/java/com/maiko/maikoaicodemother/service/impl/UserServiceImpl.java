@@ -8,7 +8,7 @@ import com.maiko.maikoaicodemother.constant.UserConstant;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.mapper.UserMapper;
-import com.maiko.maikoaicodemother.model.dto.UserQueryRequest;
+import com.maiko.maikoaicodemother.model.dto.user.UserQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.UserRoleEnum;
 import com.maiko.maikoaicodemother.model.vo.LoginUserVO;

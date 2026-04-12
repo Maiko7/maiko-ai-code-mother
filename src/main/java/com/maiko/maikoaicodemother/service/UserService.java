@@ -1,6 +1,6 @@
 package com.maiko.maikoaicodemother.service;
 
-import com.maiko.maikoaicodemother.model.dto.UserQueryRequest;
+import com.maiko.maikoaicodemother.model.dto.user.UserQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.vo.LoginUserVO;
 import com.maiko.maikoaicodemother.model.vo.UserVO;

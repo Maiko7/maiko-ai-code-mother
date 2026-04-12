@@ -9,7 +9,7 @@ import com.maiko.maikoaicodemother.constant.UserConstant;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.exception.ThrowUtils;
-import com.maiko.maikoaicodemother.model.dto.*;
+import com.maiko.maikoaicodemother.model.dto.user.*;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.vo.LoginUserVO;
 import com.maiko.maikoaicodemother.model.vo.UserVO;
