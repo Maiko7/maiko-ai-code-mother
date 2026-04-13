@@ -90,12 +90,15 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
                     String aiResponse = aiResponseBuilder.toString();
                     if (StrUtil.isNotBlank(aiResponse)) {
                         chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+                        // 对话成功后，增加应用的对话轮数
+                        incrementAppTotalRounds(appId);
                     }
                 })
                 .doOnError(error -> {
                     // 如果AI回复失败，也要记录错误消息
                     String errorMessage = "AI回复失败: " + error.getMessage();
                     chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+                    // 注意：失败不计入轮数
                 });
 
     }
@@ -237,7 +240,27 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         return super.removeById(id);
     }
 
-
-
+    /**
+     * 增加应用的对话轮数
+     *
+     * @param appId 应用ID
+     */
+    private void incrementAppTotalRounds(Long appId) {
+        try {
+            App app = this.getById(appId);
+            if (app != null) {
+                Integer currentRounds = app.getTotalRounds();
+                if (currentRounds == null) {
+                    currentRounds = 0;
+                }
+                app.setTotalRounds(currentRounds + 1);
+                this.updateById(app);
+                log.info("应用 {} 的对话轮数已更新为: {}", appId, app.getTotalRounds());
+            }
+        } catch (Exception e) {
+            // 记录日志但不影响主流程
+            log.error("更新应用对话轮数失败: {}", e.getMessage());
+        }
+    }
 
 }

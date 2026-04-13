@@ -55,4 +55,15 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return 查询条件
      */
     QueryWrapper getQueryWrapper(ChatHistoryQueryRequest chatHistoryQueryRequest);
+
+    /**
+     * 导出对话历史为Markdown格式
+     *
+     * @param appId     应用ID
+     * @param startTime 开始时间（可选）
+     * @param endTime   结束时间（可选）
+     * @param loginUser 登录用户
+     * @return Markdown格式的对话历史
+     */
+    String exportChatHistoryToMarkdown(Long appId, LocalDateTime startTime, LocalDateTime endTime, User loginUser);
 }

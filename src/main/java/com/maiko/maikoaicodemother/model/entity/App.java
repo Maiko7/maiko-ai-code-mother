@@ -82,6 +82,12 @@ public class App implements Serializable {
     private Long userId;
 
     /**
+     * 对话总轮数
+     */
+    @Column("totalRounds")
+    private Integer totalRounds;
+
+    /**
      * 编辑时间
      */
     @Column("editTime")

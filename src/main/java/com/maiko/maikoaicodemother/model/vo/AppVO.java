@@ -57,6 +57,11 @@ public class AppVO implements Serializable {
     private Long userId;
 
     /**
+     * 对话总轮数
+     */
+    private Integer totalRounds;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

@@ -188,6 +188,114 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         return queryWrapper;
     }
 
+    @Override
+    public String exportChatHistoryToMarkdown(Long appId, LocalDateTime startTime, LocalDateTime endTime, User loginUser) {
+        // 1. 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+
+        // 2. 验证权限：只有应用创建者和管理员可以导出
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        boolean isAdmin = UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+        boolean isCreator = app.getUserId().equals(loginUser.getId());
+        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.NO_AUTH_ERROR, "无权导出该应用的对话历史");
+
+        // 3. 构建查询条件，按时间范围筛选
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq("appId", appId)
+                .orderBy("createTime", true); // 按时间正序排列
+
+        // 添加时间范围过滤
+        if (startTime != null) {
+            queryWrapper.ge("createTime", startTime);
+        }
+        if (endTime != null) {
+            queryWrapper.le("createTime", endTime);
+        }
+
+        // 4. 查询所有符合条件的对话历史
+        List<ChatHistory> historyList = this.list(queryWrapper);
+
+        // 5. 生成Markdown内容
+        StringBuilder markdown = new StringBuilder();
+
+        // 标题
+        markdown.append("# ").append(app.getAppName()).append(" - 对话历史\n\n");
+
+        // 导出信息
+        markdown.append("**导出时间**: ").append(LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).append("\n\n");
+
+        if (startTime != null || endTime != null) {
+            markdown.append("**时间范围**: ");
+            if (startTime != null) {
+                markdown.append(startTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            }
+            markdown.append(" ~ ");
+            if (endTime != null) {
+                markdown.append(endTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            }
+            markdown.append("\n\n");
+        }
+
+        markdown.append("**对话轮数**: ").append(app.getTotalRounds()).append(" 轮\n\n");
+
+        markdown.append("---\n\n");
+
+        // 如果没有对话历史
+        if (CollUtil.isEmpty(historyList)) {
+            markdown.append("*暂无对话记录*\n");
+            return markdown.toString();
+        }
+
+        // 6. 格式化对话内容
+        int roundNumber = 0;
+        ChatHistory lastMessage = null;
+
+        for (int i = 0; i < historyList.size(); i++) {
+            ChatHistory current = historyList.get(i);
+
+            // 如果是用户消息，开始新的一轮
+            if (ChatHistoryMessageTypeEnum.USER.getValue().equals(current.getMessageType())) {
+                roundNumber++;
+                markdown.append("## 第").append(roundNumber).append("轮\n\n");
+
+                // 添加时间戳
+                String timeStr = current.getCreateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                markdown.append("*").append(timeStr).append("*\n\n");
+
+                // 用户消息
+                markdown.append("### 用户\n\n");
+                markdown.append(current.getMessage()).append("\n\n");
+
+                lastMessage = current;
+            }
+            // 如果是AI消息，且上一条是用户消息，则配对显示
+            else if (ChatHistoryMessageTypeEnum.AI.getValue().equals(current.getMessageType())
+                    && lastMessage != null
+                    && ChatHistoryMessageTypeEnum.USER.getValue().equals(lastMessage.getMessageType())) {
+
+                markdown.append("### AI\n\n");
+                markdown.append(current.getMessage()).append("\n\n");
+
+                // 添加分隔线（最后一轮不加）
+                if (i < historyList.size() - 1) {
+                    markdown.append("---\n\n");
+                }
+
+                lastMessage = null; // 重置，准备下一轮
+            }
+        }
+
+        // 7. 添加总结
+        markdown.append("---\n\n");
+        markdown.append("*共 ").append(historyList.size()).append(" 条消息，")
+                .append(roundNumber).append(" 轮对话*\n");
+
+        log.info("成功导出应用 {} 的对话历史，共 {} 条消息，{} 轮", appId, historyList.size(), roundNumber);
+
+        return markdown.toString();
+    }
 
 
 }

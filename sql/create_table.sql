@@ -74,6 +74,7 @@ create table app
     deployedTime datetime                           null comment '部署时间',
     priority     int      default 0                 not null comment '优先级',
     userId       bigint                             not null comment '创建用户id',
+    totalRounds  int      default 0                 not null comment '对话总轮数',
     editTime     datetime default CURRENT_TIMESTAMP not null comment '编辑时间',
     createTime   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
