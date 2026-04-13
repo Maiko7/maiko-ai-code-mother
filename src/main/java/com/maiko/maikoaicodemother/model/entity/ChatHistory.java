@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 /**
  * 对话历史实体类
  */
+// todo '父消息id（便于生成失败时重试）'
 @Data
 @Builder
 @NoArgsConstructor

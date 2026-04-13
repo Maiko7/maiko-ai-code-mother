@@ -23,7 +23,8 @@ public interface AiCodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/codegen-html-system-prompt.txt")
     HtmlCodeResult generateHtmlCode(String userMessage);
-//版本1    String generateHtmlCode(String userMessage);
+//    HtmlCodeResult generateHtmlCode(@MemoryId int memoryId, @UserMessage String userMessage);
+//    String generateHtmlCode(String userMessage);
 
     /**
      * 根据用户描述流式生成多文件代码

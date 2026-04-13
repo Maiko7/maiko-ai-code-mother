@@ -1,6 +1,7 @@
 package com.maiko.maikoaicodemother.core;
 
 import com.maiko.maikoaicodemother.ai.AiCodeGeneratorService;
+import com.maiko.maikoaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.maiko.maikoaicodemother.ai.model.HtmlCodeResult;
 import com.maiko.maikoaicodemother.ai.model.MultiFileCodeResult;
 import com.maiko.maikoaicodemother.core.parser.CodeParserExecutor;
@@ -38,7 +39,7 @@ public class AiCodeGeneratorFacade {
      * </p>
      */
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 根据用户描述和代码生成类型生成并保存代码
@@ -61,9 +62,12 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
+        // 根据appId获取相应的AI服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum) {
             case HTML -> {
-                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
+//                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(1, userMessage);
+                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode( userMessage);
                 yield  CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
@@ -126,7 +130,8 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
-
+        // 根据appId获取相应的AI服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum) {
             case HTML ->   {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);

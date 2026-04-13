@@ -629,7 +629,7 @@
 
 这是循环依赖的问题，Spring不知道先有appServiceImpl还是chatHisttoryServiceImpl，所以你让一个后加载退一步即可。
 
-```
+```java
 @Service
 @Slf4j
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
@@ -640,3 +640,10 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 ```
 
 ![image-20260413080554373](C:\Users\73450\AppData\Roaming\Typora\typora-user-images\image-20260413080554373.png)
+
+
+
+----
+
+
+

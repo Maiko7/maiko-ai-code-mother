@@ -1,7 +1,12 @@
 spring:
   application:
     name: maiko-ai-code-mother
-    # 数据库配置
+  # session配置
+  session:
+    store-type: redis
+    # session 30天过期
+    timeout: 259200
+  # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/maiko_ai_code_mother?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
@@ -12,14 +17,22 @@ spring:
     redis:
       host: localhost
       port: 6379
+#      password: 123456
+      password:
       database: 0
       timeout: 5000ms
+      ttl: 3600
+#      username: default
   profiles:
     active: local
 server:
   port: 8123
   servlet:
     context-path: /api
+    # cookie 30天过期
+    session:
+      cookie:
+        max-age: 259200
 
 # 微信公众号配置
 wx:
