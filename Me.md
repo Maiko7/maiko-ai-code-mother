@@ -620,3 +620,23 @@
 > Controller 层的校验是为了**“快”**（尽早拒绝，节省性能），Service 层的校验是为了**“稳”**（保证业务逻辑在任何情况下都不出错）。两者结合，系统才更安全、更高效。
 >
 > 以后见到Long类型都要注意 进行一个校验<=0
+
+
+
+---
+
+
+
+这是循环依赖的问题，Spring不知道先有appServiceImpl还是chatHisttoryServiceImpl，所以你让一个后加载退一步即可。
+
+```
+@Service
+@Slf4j
+public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
+
+    @Resource
+    @Lazy
+    private AppService appService;
+```
+
+![image-20260413080554373](C:\Users\73450\AppData\Roaming\Typora\typora-user-images\image-20260413080554373.png)

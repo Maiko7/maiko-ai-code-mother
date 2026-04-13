@@ -1,6 +1,7 @@
 package com.maiko.maikoaicodemother.controlller;
 
 import com.maiko.maikoaicodemother.constant.AppConstant;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -17,9 +18,11 @@ import java.io.File;
 
 /**
  * 静态资源访问
+ * SpringBoot应用部署
  */
 @RestController
 @RequestMapping("/static")
+@Tag(name = "静态资源访问", description = "SpringBoot应用部署")
 public class StaticResourceController {
 
     // 应用生成根目录（用于浏览）
