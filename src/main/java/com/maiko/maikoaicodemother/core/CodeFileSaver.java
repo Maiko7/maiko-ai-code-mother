@@ -19,6 +19,7 @@ import java.io.File;
  * @author Maiko7
  * @create 2026-04-11 15:03
  */
+@Deprecated
 public class CodeFileSaver {
 
     /**

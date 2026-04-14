@@ -55,6 +55,32 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     @Resource
     private ChatHistoryService chatHistoryService;
 
+    @Resource
+    private com.maiko.maikoaicodemother.service.ChatSummaryService chatSummaryService;
+
+    /**
+     * 流式聊天生成代码
+     * <p>
+     * 核心流程：
+     * 1. 校验参数合法性（AppId、消息内容）
+     * 2. 校验应用存在性及用户权限（仅拥有者可操作）
+     * 3. 获取应用的代码生成类型（HTML / 多文件 / Vue项目）
+     * 4. 记录用户消息到对话历史
+     * 5. 调用 AI 服务进行流式代码生成
+     * 6. 监听流式响应：
+     *    - 实时转发数据块给前端
+     *    - 收集完整响应内容
+     *    - 完成后保存 AI 回复到对话历史
+     *    - 增加应用对话轮数
+     *    - 检查并触发智能总结（异步）
+     *    - 异常时记录错误信息
+     * </p>
+     *
+     * @param appId      应用唯一标识
+     * @param message    用户输入的消息内容
+     * @param loginUser  当前登录用户信息
+     * @return 包含代码片段的流式响应（Flux<String>）
+     */
     @Override
     public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
         // 1. 参数校验
@@ -92,6 +118,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
                         chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
                         // 对话成功后，增加应用的对话轮数
                         incrementAppTotalRounds(appId);
+                        // 检查是否需要进行智能总结（异步执行，不阻塞主流程）
+                        checkAndSummarizeIfNeeded(appId, loginUser);
                     }
                 })
                 .doOnError(error -> {
@@ -260,6 +288,36 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         } catch (Exception e) {
             // 记录日志但不影响主流程
             log.error("更新应用对话轮数失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 检查是否需要进行智能总结，如果需要则异步执行
+     *
+     * @param appId     应用ID
+     * @param loginUser 登录用户
+     */
+    private void checkAndSummarizeIfNeeded(Long appId, User loginUser) {
+        try {
+            // 检查是否需要总结
+            if (chatSummaryService.shouldSummarize(appId)) {
+                log.info("应用 {} 达到总结阈值，开始异步执行智能总结", appId);
+                
+                // 异步执行总结（不阻塞用户响应）
+                new Thread(() -> {
+                    try {
+                        Long summaryId = chatSummaryService.summarizeChatHistory(appId, 10, loginUser);
+                        if (summaryId != null) {
+                            log.info("应用 {} 智能总结完成，总结ID: {}", appId, summaryId);
+                        }
+                    } catch (Exception e) {
+                        log.error("应用 {} 智能总结失败", appId, e);
+                    }
+                }, "chat-summary-" + appId).start();
+            }
+        } catch (Exception e) {
+            // 记录日志但不影响主流程
+            log.error("检查智能总结条件失败: {}", e.getMessage());
         }
     }
 

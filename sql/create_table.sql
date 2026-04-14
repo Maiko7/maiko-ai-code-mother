@@ -84,6 +84,19 @@ create table app
     INDEX idx_userId (userId)            -- 提升基于用户 ID 的查询性能
 ) comment '应用' collate = utf8mb4_unicode_ci;
 
+-- 为app表添加totalRounds字段
+-- 执行此脚本前请备份数据
+
+USE maiko_ai_code_mother;
+
+-- 添加新字段
+ALTER TABLE app
+ADD COLUMN totalRounds INT DEFAULT 0 NOT NULL COMMENT '对话总轮数' AFTER userId;
+
+-- 验证字段添加成功
+DESC app;
+
+
 -- 对话历史表
 create table chat_history
 (
@@ -92,6 +105,8 @@ create table chat_history
     messageType varchar(32)                        not null comment 'user/ai',
     appId       bigint                             not null comment '应用id',
     userId      bigint                             not null comment '创建用户id',
+    isSummarized tinyint default 0                 not null comment '是否已被总结压缩',
+    summaryId   bigint                             null comment '所属的总结记录ID',
     createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete    tinyint  default 0                 not null comment '是否删除',
@@ -99,5 +114,20 @@ create table chat_history
     INDEX idx_createTime (createTime),             -- 提升基于时间的查询性能
     INDEX idx_appId_createTime (appId, createTime) -- 游标查询核心索引
 ) comment '对话历史' collate = utf8mb4_unicode_ci;
+
+-- 对话总结表
+create table chat_summary
+(
+    id          bigint auto_increment comment 'id' primary key,
+    appId       bigint                             not null comment '应用id',
+    summaryContent text                            not null comment '总结内容（AI生成的会议纪要）',
+    summarizedRounds int                           not null comment '本次总结涵盖的对话轮数',
+    startRoundId bigint                            not null comment '起始对话ID',
+    endRoundId  bigint                             not null comment '结束对话ID',
+    userId      bigint                             not null comment '执行总结的用户id',
+    createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    INDEX idx_appId (appId),                       -- 提升基于应用的查询性能
+    INDEX idx_createTime (createTime)              -- 提升基于时间的查询性能
+) comment '对话总结记录' collate = utf8mb4_unicode_ci;
 
 -- parentId   bigint  null comment '父消息id（便于生成失败时重试）'

@@ -17,141 +17,112 @@ import reactor.core.publisher.Flux;
 import java.io.File;
 
 /**
- * 门面模式
- * AI代码生成器外观类
- * <p>
- * 提供统一的门面接口来协调AI代码生成和文件保存流程。
- * 封装了AI服务调用和文件保存的复杂逻辑，客户端只需通过此外观类即可完成代码生成和保存操作。
- * 支持HTML单文件和多文件两种代码生成模式。
- * </p>
+ * 【类定义】AI代码生成器外观类
  *
- * @author Maiko7
- * @create 2026-04-11 15:43
+ * 设计模式：门面模式
+ * 作用：
+ *   1. 它是整个系统的“前台”。外部调用者（比如 Controller）不需要知道后面有 AI 服务、解析器、保存器。
+ *   2. 它负责把“生成代码”和“保存代码”这两个大步骤串联起来。
+ *   3. 它根据传入的类型（HTML 还是 多文件），自动选择正确的执行路径。
  */
 @Service
 @Slf4j
 public class AiCodeGeneratorFacade {
 
     /**
-     * AI代码生成服务实例
-     * <p>
-     * 由Spring容器自动注入，负责与AI模型交互并生成代码
-     * </p>
+     * 注入 AI 服务工厂
+     * 作用：根据 appId 和类型，获取具体的 AI 实现类（比如 DeepSeek 还是 OpenAI）。
      */
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
-     * 根据用户描述和代码生成类型生成并保存代码
-     * <p>
-     * 该方法作为外观方法，统一处理不同类型的代码生成请求：
-     * <ul>
-     *   <li>HTML模式：生成单个HTML文件</li>
-     *   <li>多文件模式：生成HTML、CSS和JavaScript三个文件</li>
-     * </ul>
-     * 生成后的代码会自动保存到文件系统的唯一目录下。
-     * </p>
+     * 【核心逻辑】处理流式代码（Stream）
      *
-     * @param userMessage 用户提供的代码需求描述
-     * @param codeGenTypeEnum 代码生成类型枚举，不能为空
-     * @param appId 应用ID
-     * @return 保存代码文件的目录对象
-     * @throws BusinessException 当codeGenTypeEnum为空或传入不支持的类型时抛出业务异常
-     */
-    public File generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
-        if (codeGenTypeEnum == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
-        }
-        // 根据appId获取相应的AI服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
-        return switch (codeGenTypeEnum) {
-            case HTML -> {
-//                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(1, userMessage);
-                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode( userMessage);
-                yield  CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.HTML, appId);
-            }
-            case MULTI_FILE -> {
-                MultiFileCodeResult result = aiCodeGeneratorService.generateMultiFileCode(userMessage);
-                yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.MULTI_FILE, appId);
-            }
-            default -> {
-                String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, errorMessage);
-            }
-        };
-    }
-
-    /**
-     * 通用流式代码处理方法
-     *
-     * @param codeStream  代码流
-     * @param codeGenType 代码生成类型
-     * @param appId 应用ID
-     * @return 流式响应
+     * 作用：
+     *   这是一个辅助方法，专门处理“一边生成一边返回”的场景。
+     *   它利用 StringBuilder 收集所有的流片段，等流结束了（doOnComplete），再统一进行解析和保存。
      */
     private Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenType, Long appId) {
         StringBuilder codeBuilder = new StringBuilder();
         return codeStream.doOnNext(chunk -> {
-            // 实时收集代码片段
+            // 实时收集：把每一个流过来的代码片段拼起来
             codeBuilder.append(chunk);
         }).doOnComplete(() -> {
-            // 流式返回完成后保存代码
+            // 流结束了：开始干活
             try {
                 String completeCode = codeBuilder.toString();
-                // 使用执行器解析代码
+                // 1. 解析：把拼好的字符串变成对象
                 Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
-                // 使用执行器保存代码
+                // 2. 保存：把对象写入硬盘
                 File savedDir = CodeFileSaverExecutor.executeSaver(parsedResult, codeGenType, appId);
-                log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
+                log.info("保存成功，目录为：" + savedDir.getAbsolutePath());
             } catch (Exception e) {
                 log.error("保存失败: {}", e.getMessage());
             }
         });
     }
 
-
     /**
-     * 根据用户描述和代码生成类型生成并保存代码（流式）
-     * <p>
-     * 该方法作为外观方法，统一处理不同类型的代码生成请求：
-     * <ul>
-     *   <li>HTML模式：生成单个HTML文件</li>
-     *   <li>多文件模式：生成HTML、CSS和JavaScript三个文件</li>
-     * </ul>
-     * 生成后的代码会自动保存到文件系统的唯一目录下。
-     * </p>
+     * 【对外接口1】流式生成并保存（SSE场景用）
      *
-     * @param userMessage 用户提供的代码需求描述
-     * @param codeGenTypeEnum 代码生成类型枚举，不能为空
-     * @return 保存代码文件的目录对象
-     * @throws BusinessException 当codeGenTypeEnum为空或传入不支持的类型时抛出业务异常
+     * 流程：
+     *   1. 根据类型获取 AI 服务。
+     *   2. 调用 AI 的流式接口获取 Flux<String>。
+     *   3. 交给 processCodeStream 处理（收集+最后保存）。
+     *   4. 把 Flux 返回给 Controller，实现“字一个个蹦出来”的效果。
      */
-    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum,Long appId) {
+    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
-        // 根据appId获取相应的AI服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
-        return switch (codeGenTypeEnum) {
-            case HTML ->   {
-                Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
-                /**
-                 * 如果你希望直接把processCodeStream(codeStream, CodeGenTypeEnum.HTML);这个返回值
-                 * 传给最外层去返回就需要用yield去返回。
-                 *  return processCodeStream(codeStream, CodeGenTypeEnum.HTML);这样的话报错
-                 */
-//                return processCodeStream(codeStream, CodeGenTypeEnum.HTML);
-                yield  processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
-            }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
 
+        return switch (codeGenTypeEnum) {
+            case HTML -> {
+                Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
+                // 处理流并返回
+                yield processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
+            }
             case MULTI_FILE -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
-                yield  processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+                yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
-            default -> {
-                String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, errorMessage);
+            case VUE_PROJECT -> {
+                Flux<String> codeStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
+                // 注意：这里虽然类型是 VUE，但解析和保存目前可能复用 MULTI_FILE 的逻辑（视具体实现而定）
+                yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
+            default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的生成类型：" + codeGenTypeEnum.getValue());
+        };
+    }
+
+    /**
+     * 【对外接口2】普通生成并保存（非流式）
+     *
+     * 流程：
+     *   1. 调用 AI 服务，直接拿到完整的代码结果对象（HtmlCodeResult 或 MultiFileCodeResult）。
+     *   2. 直接调用保存执行器，把结果存盘。
+     *   3. 返回保存好的文件目录。
+     */
+    public File generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
+        if (codeGenTypeEnum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
+        }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
+
+        return switch (codeGenTypeEnum) {
+            case HTML -> {
+                // 1. 获取结果
+                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
+                // 2. 保存并返回目录
+                yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.HTML, appId);
+            }
+            case MULTI_FILE -> {
+                MultiFileCodeResult result = aiCodeGeneratorService.generateMultiFileCode(userMessage);
+                yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.MULTI_FILE, appId);
+            }
+            default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的生成类型：" + codeGenTypeEnum.getValue());
         };
     }
 }

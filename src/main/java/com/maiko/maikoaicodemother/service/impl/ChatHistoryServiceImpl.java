@@ -40,6 +40,9 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     @Lazy
     private AppService appService;
 
+    @Resource
+    private com.maiko.maikoaicodemother.service.ChatSummaryService chatSummaryService;
+
     /**
      * 保存对话消息。什么时候添加呢？
      * 1. AI的完整回复，回复完了肯定要保存AI的会话消息
@@ -102,21 +105,43 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     @Override
     public int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
         try {
-            // 直接构造查询条件，起始点为 1 而不是 0，用于排除最新的用户消息
-            QueryWrapper queryWrapper = QueryWrapper.create()
-                    .eq(ChatHistory::getAppId, appId)
-                    .orderBy(ChatHistory::getCreateTime, false)
-                    .limit(1, maxCount);
-            List<ChatHistory> historyList = this.list(queryWrapper);
-            if (CollUtil.isEmpty(historyList)) {
-                return 0;
-            }
-            // 反转列表，确保按时间正序（老的在前，新的在后）
-            historyList = historyList.reversed();
-            // 按时间顺序添加到记忆中
-            int loadedCount = 0;
             // 先清理历史缓存，防止重复加载
             chatMemory.clear();
+
+            int loadedCount = 0;
+
+            // 1. 加载最新的总结（如果存在）
+            com.maiko.maikoaicodemother.model.entity.ChatSummary latestSummary = 
+                    chatSummaryService.getLatestSummary(appId);
+            
+            if (latestSummary != null) {
+                // 将总结作为System Message添加到记忆开头
+                String summaryMessage = "【历史对话总结】\n" + latestSummary.getSummaryContent() + 
+                        "\n\n以上是之前对话的要点总结，请基于这些上下文继续对话。";
+                chatMemory.add(UserMessage.from(summaryMessage));
+                loadedCount++;
+                log.info("为 appId: {} 加载了最新总结，涵盖 {} 轮对话", 
+                        appId, latestSummary.getSummarizedRounds());
+            }
+
+            // 2. 加载最近未被总结的完整对话（排除已总结的部分）
+            QueryWrapper queryWrapper = QueryWrapper.create()
+                    .eq(ChatHistory::getAppId, appId)
+                    .eq("isSummarized", 0)  // 只加载未被总结的消息
+                    .orderBy(ChatHistory::getCreateTime, false)
+                    .limit(1, maxCount);  // 跳过最新的1条
+            
+            List<ChatHistory> historyList = this.list(queryWrapper);
+            
+            if (CollUtil.isEmpty(historyList)) {
+                log.info("为 appId: {} 没有未总结的历史对话", appId);
+                return loadedCount;
+            }
+
+            // 反转列表，确保按时间正序（老的在前，新的在后）
+            historyList = historyList.reversed();
+
+            // 3. 按时间顺序添加到记忆中
             for (ChatHistory history : historyList) {
                 if (ChatHistoryMessageTypeEnum.USER.getValue().equals(history.getMessageType())) {
                     chatMemory.add(UserMessage.from(history.getMessage()));
@@ -126,7 +151,8 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
                     loadedCount++;
                 }
             }
-            log.info("成功为 appId: {} 加载了 {} 条历史对话", appId, loadedCount);
+
+            log.info("成功为 appId: {} 加载了 {} 条历史对话（含总结）", appId, loadedCount);
             return loadedCount;
         } catch (Exception e) {
             log.error("加载历史对话失败，appId: {}, error: {}", appId, e.getMessage(), e);

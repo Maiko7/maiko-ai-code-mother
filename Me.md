@@ -113,7 +113,83 @@
 17. 你别管这个设计模式那个设计模式 本质就是封装，就是为了可扩展不修改原有代码。这就是最本质的，你写的代码有这个效果就行了。你别管那些七七八八的模式。
 18. 为什么user的时候没有让AI直接开发，而app的时候让AI开发。因为这个时候已经有参照了，可以让AI参照user来生成app。
 19. 为什么用UserService而不是UserMapper呢？如果你的服务要调用其他的服务，建议还是用UserService，尤其这个项目后期要变成微服务，微服务也是一个服务调用另一个服务而不是调用另一个服务里的代码。
-20. 
+20. 你创建完分支之后。
+
+    ## 一、先把 `my-extension` 分支的代码提交好
+
+    确保你在 `my-extension` 分支（IDEA 左下角当前分支显示 `my-extension`），执行：
+
+    ```bash
+    git add .
+    git commit -m "feat: 完成AI流式生成、多角色权限、封号拦截等核心功能"
+    ```
+
+    （提交信息按你实际改的内容写，规范就好）
+
+    ------
+
+    ## 二、切换到 `master` 主分支
+
+    ### 方法 1（IDEA 图形化，最省事）
+
+    直接点 IDEA 右下角的分支名 → 选择 `master` → 点击 **Checkout**，自动切换。
+
+    ### 方法 2（命令行）
+
+    ```bash
+    git checkout master
+    ```
+
+    > 切换前确保 `my-extension` 分支代码已提交，否则会有未提交文件冲突。
+
+    ------
+
+    ## 三、把 `my-extension` 合并到 `master`
+
+    ### 方法 1（IDEA 图形化，推荐）
+
+    1. 切换到 `master` 后，右下角点分支名 → 找到 `my-extension` → 选择 **Merge into Current**
+    2. 弹出窗口直接点 **Merge**，如果没有冲突，瞬间合并完成。
+
+    ### 方法 2（命令行，100% 通用）
+
+    ```bash
+    git merge my-extension
+    ```
+
+    - 无冲突：直接合并成功，`master` 分支就有了 `my-extension` 的所有更新
+    - 有冲突：IDEA 会弹出冲突窗口，手动解决后点 **Merge** 即可
+
+    ------
+
+    ## 四、合并完，推送到 Gitee + GitHub（按你要求先 Gitee 再 GitHub）
+
+    ### 1. 先推 Gitee（你的 `origin` 远程仓库）
+
+    ```bash
+    git push origin master
+    ```
+
+    ### 2. 再推 GitHub（你的 `github` 远程仓库）
+
+    ```bash
+    git push github master
+    ```
+
+    ------
+
+    ## 五、可选：合并后删除 `my-extension` 分支（不删也不影响）
+
+    如果这个功能分支用完了，本地可以删掉：
+
+    ```bash
+    git branch -d my-extension
+    ```
+
+    ```bash
+    git push origin --delete my-extension
+    git push github --delete my-extension
+    ```
 
 # 编码
 
@@ -647,3 +723,238 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 
 
 
+> package com.maiko.maikoaicodemother.core.saver;
+>
+> import cn.hutool.core.io.FileUtil;
+> import cn.hutool.core.util.StrUtil;
+> import com.maiko.maikoaicodemother.constant.AppConstant;
+> import com.maiko.maikoaicodemother.exception.BusinessException;
+> import com.maiko.maikoaicodemother.exception.ErrorCode;
+> import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
+>
+> import java.io.File;
+> import java.nio.charset.StandardCharsets;
+>
+> /**
+>  * 【类定义】抽象代码文件保存器
+>  *
+>  * 设计模式：模板方法模式
+>  * 作用：定义了一套保存代码文件的“标准流程”（saveCode），
+>  *      但是把流程中具体的“细节”（比如存什么文件、目录叫什么）留给子类去实现。
+>  *
+>  * <T>：泛型，代表不同的代码结果对象（比如 HtmlCodeResult, JavaCodeResult 等）。
+>  */
+>  public abstract class CodeFileSaverTemplate<T> {
+>
+>     // 【常量】定义所有文件保存的根目录，从常量类中读取
+>     protected static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
+>
+>     /**
+>      * 【核心流程】模板方法
+>      *
+>      * final 关键字：表示这个方法是“最终”的，子类不能修改（重写）这个流程。
+>      * 保证所有代码保存的步骤都是一致的：校验 -> 建目录 -> 保存 -> 返回。
+>      */
+>      public final File saveCode(T result, Long appId) {
+>         // 1. 验证输入：检查数据是否合法
+>         validateInput(result);
+>         // 2. 构建唯一目录：根据应用ID创建专属文件夹
+>         String baseDirPath = buildUniqueDir(appId);
+>         // 3. 保存文件：这是抽象方法，具体怎么存（存几个文件、叫什么名）由子类决定
+>         saveFiles(result, baseDirPath);
+>         // 4. 返回结果：返回创建好的目录文件对象
+>         return new File(baseDirPath);
+>      }
+>
+>     /**
+>      * 【步骤1：校验】
+>      * protected：允许子类访问，甚至允许子类重写（扩展）校验逻辑。
+>      * 默认只检查对象是否为空，子类（如 HtmlCodeFileSaverTemplate）可以增加更多检查。
+>      */
+>      protected void validateInput(T result) {
+>         if (result == null) {
+>             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "代码结果对象不能为空");
+>         }
+>      }
+>
+>     /**
+>      * 【步骤2：建目录】
+>      * final：子类不能修改建目录的逻辑。
+>      * 逻辑：根目录 + 类型_应用ID（例如：output/html_101）。
+>      */
+>      protected final String buildUniqueDir(Long AppId) {
+>         if (AppId == null) {
+>             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用ID不能为空");
+>         }
+>         // 获取代码类型（例如 "html"），这是调用子类实现的 getCodeType()
+>         String codeType = getCodeType().getValue();
+>         // 拼接目录名：类型_应用ID
+>         String uniqueDirName = StrUtil.format("{}_{}", codeType, AppId);
+>         // 拼接完整路径
+>         String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
+>         // 创建目录（如果不存在）
+>         FileUtil.mkdir(dirPath);
+>         return dirPath;
+>      }
+>
+>     /**
+>      * 【工具方法】写入单个文件
+>      * final：工具方法，逻辑固定，子类直接调用即可。
+>      * 作用：把字符串内容写入到指定目录下的指定文件中。
+>      */
+>      protected final void writeToFile(String dirPath, String filename, String content) {
+>         // 只有内容不为空时才写入
+>         if (StrUtil.isNotBlank(content)) {
+>             String filePath = dirPath + File.separator + filename;
+>             // 使用 Hutool 工具类写入文件，指定 UTF-8 编码
+>             FileUtil.writeString(content, filePath, StandardCharsets.UTF_8);
+>         }
+>      }
+>
+>     /**
+>      * 【抽象方法1】获取代码类型
+>      * abstract：没有方法体，强制要求子类必须实现。
+>      * 目的：让父类知道当前处理的是 HTML 还是 Java 代码，用于创建目录名。
+>      */
+>      protected abstract CodeGenTypeEnum getCodeType();
+>
+>     /**
+>      * 【抽象方法2】保存文件的具体实现
+>      * abstract：强制子类实现。
+>      * 目的：父类不知道具体要存几个文件、文件名是什么，完全交给子类（如 HtmlCodeFileSaverTemplate）去写。
+>      */
+>      protected abstract void saveFiles(T result, String baseDirPath);
+>   }
+>
+>
+> package com.maiko.maikoaicodemother.core.saver;
+>
+> import cn.hutool.core.util.StrUtil;
+> import com.maiko.maikoaicodemother.ai.model.MultiFileCodeResult;
+> import com.maiko.maikoaicodemother.exception.BusinessException;
+> import com.maiko.maikoaicodemother.exception.ErrorCode;
+> import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
+>
+> /**
+>  * 【类定义】多文件代码保存器
+>  *
+>  * 作用：专门用来保存包含多个文件的项目（例如：HTML + CSS + JS）。
+>  * 设计思路：
+>  *   它继承自父类 CodeFileSaverTemplate，复用了“建目录、校验、写文件”的通用流程。
+>  *   它只需要告诉父类：“我是多文件类型”以及“具体要存哪几个文件”。
+>  *   正如注释所说，这种拆分方式让代码结构非常清晰，维护时只需要找对应的类即可。
+>  */
+> public class MultiFileCodeFileSaverTemplate extends CodeFileSaverTemplate<MultiFileCodeResult> {
+>
+>     /**
+>      * 【实现1：定义类型】
+>      * 告诉系统：我是处理多文件类型的。
+>      */
+>      @Override
+>      public CodeGenTypeEnum getCodeType() {
+>         return CodeGenTypeEnum.MULTI_FILE;
+>      }
+>
+>     /**
+>      * 【实现2：具体保存逻辑】
+>      * 这里定义了多文件项目具体包含哪些文件。
+>      *
+>      * 逻辑：
+>      *   1. 调用父类的 writeToFile 方法。
+>      *   2. 分别把 HTML、CSS、JS 内容写入对应的文件名（index.html, style.css, script.js）。
+>      *   3. 如果某个内容为空（比如 CSS），writeToFile 内部会自动跳过（基于之前的代码逻辑）。
+>      */
+>      @Override
+>      protected void saveFiles(MultiFileCodeResult result, String baseDirPath) {
+>          // 保存 HTML 文件 -> index.html
+>          writeToFile(baseDirPath, "index.html", result.getHtmlCode());
+>          // 保存 CSS 文件 -> style.css
+>          writeToFile(baseDirPath, "style.css", result.getCssCode());
+>          // 保存 JavaScript 文件 -> script.js
+>          writeToFile(baseDirPath, "script.js", result.getJsCode());
+>      }
+>
+>     /**
+>      * 【实现3：自定义校验】
+>      * 针对多文件场景的特殊校验规则。
+>      */
+>      @Override
+>      protected void validateInput(MultiFileCodeResult result) {
+>         // 1. 先执行父类的通用校验（比如检查 result 是否为空）
+>         super.validateInput(result);
+>
+>         // 2. 增加特定业务校验：
+>         // 对于多文件项目，CSS 和 JS 可以为空（可能只有结构），但 HTML 必须有。
+>         if (StrUtil.isBlank(result.getHtmlCode())) {
+>             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "HTML代码内容不能为空");
+>         }
+>      }
+>  }
+>
+>  private static final MultiFileCodeFileSaverTemplate multiFileCodeFileSaver = new MultiFileCodeFileSaverTemplate();
+>
+> 它的MultiFileCodeFileSaverTemplate没定义 // 1. 验证输入：检查数据是否合法
+>         validateInput(result);
+>         // 2. 构建唯一目录：根据应用ID创建专属文件夹
+>         String baseDirPath = buildUniqueDir(appId);
+>         // 3. 保存文件：这是抽象方法，具体怎么存（存几个文件、叫什么名）由子类决定
+>         saveFiles(result, baseDirPath);
+>         // 4. 返回结果：返回创建好的目录文件对象
+>         return new File(baseDirPath);
+> 它会执行这些吗？ 我看MultiFileCodeFileSaverTemplate只有saveFilesvalidateInput？？
+>
+> 
+>
+> 
+>
+> 这正是**模板方法模式**最精妙的地方。答案是肯定的：**它绝对会执行这些代码**。
+>
+> 虽然 `MultiFileCodeFileSaverTemplate` 类里看起来只写了 `saveFiles` 和 `validateInput`，但它通过 `extends CodeFileSaverTemplate` **继承**了父类所有的非私有方法。
+>
+> 这里有一个关键的运行机制，我来为你拆解一下：
+>
+> ### **核心机制：继承与多态**
+>
+> 当你调用 `multiFileCodeFileSaver.saveCode(...)` 时，程序执行的流程如下：
+>
+> #### **1. 入口在父类**
+>
+> `saveCode` 方法定义在父类 `CodeFileSaverTemplate` 中，并且被 `final` 修饰。
+>
+> - **结果**：子类无法重写它，所以当你调用这个方法时，**永远执行的是父类里定义的那套标准流程**。
+>
+> #### **2. 流程中的“回调”**
+>
+> 在父类的 `saveCode` 流程中，它调用了 `validateInput(result)` 和 `saveFiles(result, baseDirPath)`。
+>
+> - 虽然代码写在父类里，但这两个方法是 `protected` 且非 `final` 的（甚至是抽象的）。
+> - **Java 的多态机制**会判断：**“当前这个对象实际上是 `MultiFileCodeFileSaverTemplate` 的实例”**。
+> - **结果**：父类在运行时会自动去调用**子类重写后的版本**。
+>
+> ### **图解执行流程**
+>
+> 假设你执行了这行代码：
+>
+> ```java
+> // 调用入口
+> File dir = multiFileCodeFileSaver.saveCode(result, 101L);
+> ```
+>
+> **实际发生的步骤（跳来跳去的过程）：**
+>
+> 1. 进入父类`saveCode()`：
+>    - 执行 `validateInput(result)` -> **跳转到子类**的 `validateInput`（执行特定校验）。
+>    - 执行 `buildUniqueDir(appId)` -> **留在父类**（执行创建目录逻辑）。
+>    - 执行 `saveFiles(result, baseDirPath)` -> **跳转到子类**的 `saveFiles`（执行具体的 HTML/CSS/JS 写入）。
+>    - 执行 `return new File(baseDirPath)` -> **留在父类**（返回结果）。
+>
+> ### **为什么这样设计？**
+>
+> 如果不使用这种模式，你可能需要在 `MultiFileCodeFileSaverTemplate` 里把 `saveCode` 复制粘贴一遍，那样如果有 10 个不同的保存器，改一个公共逻辑（比如目录命名规则）就要改 10 次。
+>
+> **现在的写法：**
+>
+> - **父类**负责“骨架”（怎么做饭：买菜 -> 洗菜 -> 炒菜）。
+> - **子类**负责“细节”（做什么饭：洗什么菜、炒什么菜）。
+>
+> 所以，尽管子类代码看起来很少，它依然完整拥有了父类定义的所有执行步骤。
