@@ -7,6 +7,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.maiko.maikoaicodemother.constant.AppConstant;
 import com.maiko.maikoaicodemother.core.AiCodeGeneratorFacade;
+import com.maiko.maikoaicodemother.core.handler.StreamHandlerExecutor;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.exception.ThrowUtils;
@@ -20,6 +21,7 @@ import com.maiko.maikoaicodemother.model.vo.AppVO;
 import com.maiko.maikoaicodemother.model.vo.UserVO;
 import com.maiko.maikoaicodemother.service.AppService;
 import com.maiko.maikoaicodemother.service.ChatHistoryService;
+import com.maiko.maikoaicodemother.service.ChatSummaryService;
 import com.maiko.maikoaicodemother.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -56,7 +58,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private ChatHistoryService chatHistoryService;
 
     @Resource
-    private com.maiko.maikoaicodemother.service.ChatSummaryService chatSummaryService;
+    private ChatSummaryService chatSummaryService;
+
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
 
     /**
      * 流式聊天生成代码
@@ -104,30 +109,65 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         // 6. 调用 AI 生成代码（流式）
         Flux<String> contentFlux = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
         // 7. 收集AI响应内容并在完成后记录到对话历史
-        StringBuilder aiResponseBuilder = new StringBuilder();
-        return contentFlux
-                .map(chunk -> {
-                    // 收集AI响应内容
-                    aiResponseBuilder.append(chunk);
-                    return chunk;
-                })
+        Flux<String> resultFlux = streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+
+        // 【关键修改】在这里继续链式调用，追加业务逻辑
+        return resultFlux
                 .doOnComplete(() -> {
-                    // 流式响应完成后，添加AI消息到对话历史
-                    String aiResponse = aiResponseBuilder.toString();
-                    if (StrUtil.isNotBlank(aiResponse)) {
-                        chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-                        // 对话成功后，增加应用的对话轮数
-                        incrementAppTotalRounds(appId);
-                        // 检查是否需要进行智能总结（异步执行，不阻塞主流程）
-                        checkAndSummarizeIfNeeded(appId, loginUser);
-                    }
-                })
-                .doOnError(error -> {
-                    // 如果AI回复失败，也要记录错误消息
-                    String errorMessage = "AI回复失败: " + error.getMessage();
-                    chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-                    // 注意：失败不计入轮数
+                    /**
+                     * Q：为什么不在SimpleTextStreamHandler里直接写 incrementAppTotalRounds 和 checkAndSummarizeIfNeeded 呢？
+                     * A：如果你在 SimpleTextStreamHandler 里写了 incrementAppTotalRounds：
+                     * 耦合度变高：Handler 就必须依赖 AppService。
+                     * 通用性变差：万一以后有个 PythonStreamHandler 也要用这个 Handler，但 Python 项目不需要“增加轮数”，那怎么办？你就得在 Handler 里写一堆 if-else 判断。
+                     * 职责混乱：一个负责“搬运数据”的类，突然跑去管“账户余额（轮数）”，这就不专业了。
+                     *
+                     * 展开式就是：
+                     * Runnable myAction = new Runnable() {
+                     *     @Override
+                     *     public void run() {
+                     *         // 2. 这里写具体的业务逻辑
+                     *         this.incrementAppTotalRounds(appId);
+                     *         this.checkAndSummarizeIfNeeded(appId, loginUser);
+                     *     }
+                     * };
+                     * resultFlux.doOnComplete(myAction);
+                     */
+
+
+                    // 当流彻底传输完成后（Handler 已经存完库了），执行以下业务逻辑：
+
+                    // 1. 增加应用对话轮数
+                    this.incrementAppTotalRounds(appId);
+
+                    // 2. 检查是否需要智能总结
+                    this.checkAndSummarizeIfNeeded(appId, loginUser);
+
+                    log.info("对话处理全流程结束，轮数已增加，总结检查完毕");
                 });
+//        StringBuilder aiResponseBuilder = new StringBuilder();
+//        return contentFlux
+//                .map(chunk -> {
+//                    // 收集AI响应内容
+//                    aiResponseBuilder.append(chunk);
+//                    return chunk;
+//                })
+//                .doOnComplete(() -> {
+//                    // 流式响应完成后，添加AI消息到对话历史
+//                    String aiResponse = aiResponseBuilder.toString();
+//                    if (StrUtil.isNotBlank(aiResponse)) {
+//                        chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+//                        // 对话成功后，增加应用的对话轮数
+//                        incrementAppTotalRounds(appId);
+//                        // 检查是否需要进行智能总结（异步执行，不阻塞主流程）
+//                        checkAndSummarizeIfNeeded(appId, loginUser);
+//                    }
+//                })
+//                .doOnError(error -> {
+//                    // 如果AI回复失败，也要记录错误消息
+//                    String errorMessage = "AI回复失败: " + error.getMessage();
+//                    chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+//                    // 注意：失败不计入轮数
+//                });
 
     }
 

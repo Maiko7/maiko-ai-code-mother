@@ -113,7 +113,28 @@
 17. 你别管这个设计模式那个设计模式 本质就是封装，就是为了可扩展不修改原有代码。这就是最本质的，你写的代码有这个效果就行了。你别管那些七七八八的模式。
 18. 为什么user的时候没有让AI直接开发，而app的时候让AI开发。因为这个时候已经有参照了，可以让AI参照user来生成app。
 19. 为什么用UserService而不是UserMapper呢？如果你的服务要调用其他的服务，建议还是用UserService，尤其这个项目后期要变成微服务，微服务也是一个服务调用另一个服务而不是调用另一个服务里的代码。
-20. 你创建完分支之后。
+20. 比如你在78行打断点 你不是老是按F9（Resume Program）就是![image-20260415071416324](C:\Users\73450\AppData\Roaming\Typora\typora-user-images\image-20260415071416324.png)这个的时候就马上跳到下一个断点去了，那你这个时候想在78行断点的下一行，难道你一路打断点下去？其实不需要。你只需要按F8（Step Over)即![image-20260415071459309](C:\Users\73450\AppData\Roaming\Typora\typora-user-images\image-20260415071459309.png)，至于F7（Step Into)和Shift+F8（Step Out)就是
+
+    ### 1. Step into（单步进入 / 步入)
+
+    - 执行**当前这一行**
+    - 如果这一行**调用了一个函数 / 方法**，会**跳进这个函数内部**，继续一行一行执行
+    - 适合：想仔细看函数内部是怎么跑的
+
+    ### 2. Step out（单步跳出 / 步出）
+
+    - 直接**把当前正在执行的函数跑完**
+    - 然后**跳出这个函数**，回到上一层调用它的地方
+    - 适合：不想再看函数内部细节，想快速回到外层
+
+    ------
+
+    ### 简单对比
+
+    - **Step over（单步跳过）**：不进函数，直接执行完这一行
+    - **Step into**：进函数，一行一行看
+    - **Step out**：从函数里直接跳出来
+21. 
 
     ## 一、先把 `my-extension` 分支的代码提交好
 
@@ -744,7 +765,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >  *
 >  * <T>：泛型，代表不同的代码结果对象（比如 HtmlCodeResult, JavaCodeResult 等）。
 >  */
->  public abstract class CodeFileSaverTemplate<T> {
+>    public abstract class CodeFileSaverTemplate<T> {
 >
 >     // 【常量】定义所有文件保存的根目录，从常量类中读取
 >     protected static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
@@ -755,7 +776,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >      * final 关键字：表示这个方法是“最终”的，子类不能修改（重写）这个流程。
 >      * 保证所有代码保存的步骤都是一致的：校验 -> 建目录 -> 保存 -> 返回。
 >      */
->      public final File saveCode(T result, Long appId) {
+>       public final File saveCode(T result, Long appId) {
 >         // 1. 验证输入：检查数据是否合法
 >         validateInput(result);
 >         // 2. 构建唯一目录：根据应用ID创建专属文件夹
@@ -764,25 +785,25 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >         saveFiles(result, baseDirPath);
 >         // 4. 返回结果：返回创建好的目录文件对象
 >         return new File(baseDirPath);
->      }
+>       }
 >
 >     /**
 >      * 【步骤1：校验】
 >      * protected：允许子类访问，甚至允许子类重写（扩展）校验逻辑。
 >      * 默认只检查对象是否为空，子类（如 HtmlCodeFileSaverTemplate）可以增加更多检查。
 >      */
->      protected void validateInput(T result) {
+>       protected void validateInput(T result) {
 >         if (result == null) {
 >             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "代码结果对象不能为空");
 >         }
->      }
+>       }
 >
 >     /**
 >      * 【步骤2：建目录】
 >      * final：子类不能修改建目录的逻辑。
 >      * 逻辑：根目录 + 类型_应用ID（例如：output/html_101）。
 >      */
->      protected final String buildUniqueDir(Long AppId) {
+>       protected final String buildUniqueDir(Long AppId) {
 >         if (AppId == null) {
 >             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用ID不能为空");
 >         }
@@ -795,36 +816,36 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >         // 创建目录（如果不存在）
 >         FileUtil.mkdir(dirPath);
 >         return dirPath;
->      }
+>       }
 >
 >     /**
 >      * 【工具方法】写入单个文件
 >      * final：工具方法，逻辑固定，子类直接调用即可。
 >      * 作用：把字符串内容写入到指定目录下的指定文件中。
 >      */
->      protected final void writeToFile(String dirPath, String filename, String content) {
+>       protected final void writeToFile(String dirPath, String filename, String content) {
 >         // 只有内容不为空时才写入
 >         if (StrUtil.isNotBlank(content)) {
 >             String filePath = dirPath + File.separator + filename;
 >             // 使用 Hutool 工具类写入文件，指定 UTF-8 编码
 >             FileUtil.writeString(content, filePath, StandardCharsets.UTF_8);
 >         }
->      }
+>       }
 >
 >     /**
 >      * 【抽象方法1】获取代码类型
 >      * abstract：没有方法体，强制要求子类必须实现。
 >      * 目的：让父类知道当前处理的是 HTML 还是 Java 代码，用于创建目录名。
 >      */
->      protected abstract CodeGenTypeEnum getCodeType();
+>       protected abstract CodeGenTypeEnum getCodeType();
 >
 >     /**
 >      * 【抽象方法2】保存文件的具体实现
 >      * abstract：强制子类实现。
 >      * 目的：父类不知道具体要存几个文件、文件名是什么，完全交给子类（如 HtmlCodeFileSaverTemplate）去写。
 >      */
->      protected abstract void saveFiles(T result, String baseDirPath);
->   }
+>        protected abstract void saveFiles(T result, String baseDirPath);
+>       }
 >
 >
 > package com.maiko.maikoaicodemother.core.saver;
@@ -850,10 +871,10 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >      * 【实现1：定义类型】
 >      * 告诉系统：我是处理多文件类型的。
 >      */
->      @Override
->      public CodeGenTypeEnum getCodeType() {
+>       @Override
+>       public CodeGenTypeEnum getCodeType() {
 >         return CodeGenTypeEnum.MULTI_FILE;
->      }
+>       }
 >
 >     /**
 >      * 【实现2：具体保存逻辑】
@@ -864,22 +885,22 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >      *   2. 分别把 HTML、CSS、JS 内容写入对应的文件名（index.html, style.css, script.js）。
 >      *   3. 如果某个内容为空（比如 CSS），writeToFile 内部会自动跳过（基于之前的代码逻辑）。
 >      */
->      @Override
->      protected void saveFiles(MultiFileCodeResult result, String baseDirPath) {
->          // 保存 HTML 文件 -> index.html
->          writeToFile(baseDirPath, "index.html", result.getHtmlCode());
->          // 保存 CSS 文件 -> style.css
->          writeToFile(baseDirPath, "style.css", result.getCssCode());
->          // 保存 JavaScript 文件 -> script.js
->          writeToFile(baseDirPath, "script.js", result.getJsCode());
->      }
+>       @Override
+>       protected void saveFiles(MultiFileCodeResult result, String baseDirPath) {
+>           // 保存 HTML 文件 -> index.html
+>           writeToFile(baseDirPath, "index.html", result.getHtmlCode());
+>           // 保存 CSS 文件 -> style.css
+>           writeToFile(baseDirPath, "style.css", result.getCssCode());
+>           // 保存 JavaScript 文件 -> script.js
+>           writeToFile(baseDirPath, "script.js", result.getJsCode());
+>       }
 >
 >     /**
 >      * 【实现3：自定义校验】
 >      * 针对多文件场景的特殊校验规则。
 >      */
->      @Override
->      protected void validateInput(MultiFileCodeResult result) {
+>       @Override
+>       protected void validateInput(MultiFileCodeResult result) {
 >         // 1. 先执行父类的通用校验（比如检查 result 是否为空）
 >         super.validateInput(result);
 >
@@ -888,8 +909,8 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >         if (StrUtil.isBlank(result.getHtmlCode())) {
 >             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "HTML代码内容不能为空");
 >         }
->      }
->  }
+>       }
+>   }
 >
 >  private static final MultiFileCodeFileSaverTemplate multiFileCodeFileSaver = new MultiFileCodeFileSaverTemplate();
 >
