@@ -108,6 +108,9 @@ public class ScreenshotServiceImpl implements ScreenshotService {
     private String generateScreenshotKey(String fileName) {
         // 获取今天的日期，格式化为 yyyy/MM/dd
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        // 修改后：直接去掉斜杠 上面的是/screenshots/2026/04/16/a1b2c3d4_compressed.jpg 你看看这多少层级
+        // 下面这个就是/screenshots/20260416/a1b2c3d4_compressed.jpg
+//        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         // 拼接完整路径
         return String.format("/screenshots/%s/%s", datePath, fileName);

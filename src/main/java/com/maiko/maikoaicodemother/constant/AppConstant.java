@@ -30,4 +30,11 @@ public interface AppConstant {
      */
     String CODE_DEPLOY_HOST = "http://localhost";
 
+    /**
+     * 默认应用封面图路径（静态资源）
+     * 当应用的 cover 字段为空或截图失败时，使用此默认封面
+     * Spring Boot 默认会把 src/main/resources/static 目录下的文件当作静态资源根目录。
+     */
+    String DEFAULT_COVER_URL = "/images/Mango.png";
+
 }

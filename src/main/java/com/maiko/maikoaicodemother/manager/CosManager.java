@@ -2,6 +2,7 @@ package com.maiko.maikoaicodemother.manager;
 
 import com.maiko.maikoaicodemother.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
+import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import jakarta.annotation.Resource;
@@ -55,6 +56,29 @@ public class CosManager {
         } else {
             log.error("文件上传COS失败，返回结果为空");
             return null;
+        }
+    }
+
+    /**
+     * 删除 COS 中的文件
+     *
+     * @param key COS对象键（完整路径，例如：/screenshots/2026/04/16/abc123.jpg）
+     * @return 是否删除成功
+     */
+    public boolean deleteFile(String key) {
+        if (key == null || key.isEmpty()) {
+            log.warn("删除COS文件失败：key为空");
+            return false;
+        }
+
+        try {
+            DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(cosClientConfig.getBucket(), key);
+            cosClient.deleteObject(deleteObjectRequest);
+            log.info("COS文件删除成功: {}", key);
+            return true;
+        } catch (Exception e) {
+            log.error("COS文件删除失败: {}", key, e);
+            return false;
         }
     }
 }

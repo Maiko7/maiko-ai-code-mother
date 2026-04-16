@@ -218,6 +218,7 @@ public class AppController {
         if (!oldApp.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // 它AppService重写了removeById方法，会删除关联的对话历史和应用封面。
         boolean result = appService.removeById(id);
         return ResultUtils.success(result);
     }

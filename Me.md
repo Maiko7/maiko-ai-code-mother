@@ -1298,3 +1298,100 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 
 
 
+>   // 【封面图兜底逻辑】如果 cover 字段为空，使用默认封面
+>
+> ```java
+>     if (StrUtil.isBlank(app.getCover())) {
+> 
+>         appVO.setCover(AppConstant.DEFAULT_COVER_URL);
+> 
+>         log.debug("应用 {} 的封面为空，使用默认封面: {}", app.getId(), AppConstant.DEFAULT_COVER_URL);
+> 
+>     }
+> ```
+>
+>    
+>
+> ```java
+> /**默认应用封面图路径（静态资源）
+>  当应用的 cover 字段为空或截图失败时，使用此默认封面
+>      */
+>     String DEFAULT_COVER_URL = "/images/Mango.png";
+> ```
+>
+> 你这个常量就写个这样的地址它能访问到？ 你不写比如E:\Code\Maiko7\AI\maiko-ai-code-mother\src\main\resources\static\images\Mango.png？
+>
+> 
+>
+> **不用写绝对路径，直接用 `/images/Mango.png` 是对的！**
+>
+> 如果写成 `E:\Code\...\Mango.png`，那只能在你自己的电脑上访问，部署到服务器（Linux）上就彻底挂了。
+>
+> **原因如下：**
+>
+> 1. **Spring Boot 的默认规则**：
+>    Spring Boot 默认会把 `src/main/resources/static` 目录下的文件当作**静态资源**根目录。
+>    - 物理路径：`src/main/resources/static/images/Mango.png`
+>    - 访问路径（URL）：`http://你的域名/images/Mango.png`
+> 2. **数据库存的是什么？**
+>    数据库存的应该是**“网址”**，而不是**“硬盘文件路径”**。前端拿到这个字符串是直接放在 `<img src="...">` 里用的，它只认识网址。
+
+
+
+---
+
+
+
+> // 【资源清理1】先查询应用信息，获取云端封面文件的 key
+> App app = this.getById(appId);
+> if (app != null && StrUtil.isNotBlank(app.getCover())) {
+>     deleteCoverFromCos(app.getCover());
+> }
+>
+> // 【资源清理2】删除关联的对话历史
+> chatHistoryService.deleteByAppId(appId);
+>
+> // 删除应用
+> super.removeById(id);
+> Q：他这个直接删除应用不就行了？干嘛还要删除资源1资源2？
+>
+> A：这其实是为了解决“数据删了，垃圾还在”的问题。
+>
+> 如果只执行 `super.removeById(id)`，虽然数据库里的记录没了，但应用产生的关联文件和历史数据并不会自动消失，时间久了就会造成**存储浪费**和**脏数据**。
+>
+> 具体来看，这两步清理工作主要解决的是以下隐患：
+>
+> ### **🗑️ 为什么要删除资源1（云端封面图）？**
+>
+> - 省钱（存储费）
+>
+>   ：
+>
+>   - 数据库里的记录只是“链接”，真正的图片文件是存在腾讯云 COS 里的。
+>   - 如果你只删数据库记录，不删 COS 文件，那个图片会一直存在你的云存储里。
+>   - **后果**：你的服务器里存了几千个“孤儿图片”，没人引用它们，但你每个月还得为它们付**存储费**。
+>
+> - 整洁（资源管理）
+>
+>   ：
+>
+>   - 避免云存储里堆积大量无用的垃圾文件，以后想找图都找不到。
+>
+> ### **🗑️ 为什么要删除资源2（对话历史）？**
+>
+> - 防止脏数据
+>
+>   ：
+>
+>   - 应用都删了，这个应用产生的聊天记录就没意义了。
+>   - 如果不删，数据库的 `chat_history` 表里会留下一堆 `appId` 指向一个不存在的应用的记录。
+>
+> - 节省数据库空间
+>
+>   ：
+>
+>   - 聊天记录通常数据量很大，不清理会无谓地占用数据库磁盘。
+>
+> ### **📌 总结**
+>
+> `super.removeById(id)` 只是撕掉了**目录卡片**，而资源清理 1 和 2 是为了把**书架上的书**和**仓库里的货**也一起扔掉。这就是所谓的**“数据一致性”**和**“资源闭环”**。

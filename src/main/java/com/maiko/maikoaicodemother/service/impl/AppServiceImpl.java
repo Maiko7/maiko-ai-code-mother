@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.maiko.maikoaicodemother.config.CosClientConfig;
 import com.maiko.maikoaicodemother.constant.AppConstant;
 import com.maiko.maikoaicodemother.core.AiCodeGeneratorFacade;
 import com.maiko.maikoaicodemother.core.builder.VueProjectBuilder;
@@ -12,6 +13,7 @@ import com.maiko.maikoaicodemother.core.handler.StreamHandlerExecutor;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.exception.ThrowUtils;
+import com.maiko.maikoaicodemother.manager.CosManager;
 import com.maiko.maikoaicodemother.mapper.AppMapper;
 import com.maiko.maikoaicodemother.model.dto.app.AppQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.App;
@@ -66,6 +68,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private ScreenshotService screenshotService;
+
+    @Resource
+    private CosManager cosManager;
+
+    @Resource
+    private CosClientConfig cosClientConfig;
 
     /**
      * 流式聊天生成代码
@@ -295,6 +303,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         }
         AppVO appVO = new AppVO();
         BeanUtil.copyProperties(app, appVO);
+        
+        // 【封面图兜底逻辑】如果 cover 字段为空，使用默认封面
+        if (StrUtil.isBlank(app.getCover())) {
+            appVO.setCover(AppConstant.DEFAULT_COVER_URL);
+            log.debug("应用 {} 的封面为空，使用默认封面: {}", app.getId(), AppConstant.DEFAULT_COVER_URL);
+        }
+        
         // 关联查询用户信息
         Long userId = app.getUserId();
         if (userId != null) {
@@ -353,7 +368,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     }
 
     /**
-     * 删除应用时关联删除对话历史
+     * 删除应用时关联删除对话历史和云端封面文件
      *
      * @param id 应用ID
      * @return 是否成功
@@ -368,15 +383,58 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         if (appId <= 0) {
             return false;
         }
-        // 先删除关联的对话历史
+        
+        // 【资源清理1】先查询应用信息，获取云端封面文件的 key
+        App app = this.getById(appId);
+        if (app != null && StrUtil.isNotBlank(app.getCover())) {
+            deleteCoverFromCos(app.getCover());
+        }
+        
+        // 【资源清理2】删除关联的对话历史
         try {
             chatHistoryService.deleteByAppId(appId);
         } catch (Exception e) {
             // 记录日志但不阻止应用删除
             log.error("删除应用关联对话历史失败: {}", e.getMessage());
         }
+        
         // 删除应用
         return super.removeById(id);
+    }
+
+    /**
+     * 从 COS 中删除应用的封面文件
+     *
+     * @param coverUrl 完整的封面图 URL
+     */
+    private void deleteCoverFromCos(String coverUrl) {
+        try {
+            // 从完整 URL 中提取 COS key
+            // 例如: https://xxx.cos.ap-guangzhou.myqcloud.com/screenshots/2026/04/16/abc.jpg
+            // 提取出: /screenshots/2026/04/16/abc.jpg
+            String host = cosClientConfig.getHost();
+            String key = coverUrl.replace("https://" + host, "");
+            
+            // 如果替换后没有变化，说明格式不匹配，尝试http格式
+            if (key.equals(coverUrl)) {
+                key = coverUrl.replace("http://" + host, "");
+            }
+            
+            // 如果还是没变化，可能是相对路径，直接使用
+            if (!key.equals(coverUrl)) {
+                boolean deleted = cosManager.deleteFile(key);
+                if (deleted) {
+                    log.info("应用云端封面删除成功: {}", coverUrl);
+                } else {
+                    log.warn("应用云端封面删除失败: {}", coverUrl);
+                }
+            } else {
+                log.warn("无法解析封面URL，跳过删除: {}", coverUrl);
+            }
+        } catch (Exception e) {
+            // 记录日志但不阻止应用删除
+            log.error("删除应用云端封面异常: {}", coverUrl, e);
+        }
     }
 
     /**
