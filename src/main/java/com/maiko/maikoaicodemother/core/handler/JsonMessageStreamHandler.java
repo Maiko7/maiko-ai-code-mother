@@ -5,9 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.maiko.maikoaicodemother.ai.model.message.*;
+import com.maiko.maikoaicodemother.constant.AppConstant;
+import com.maiko.maikoaicodemother.core.builder.VueProjectBuilder;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.maiko.maikoaicodemother.service.ChatHistoryService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -27,6 +30,9 @@ import java.util.Set;
 @Slf4j
 @Component
 public class JsonMessageStreamHandler {
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
     /**
      * 处理主入口
@@ -62,6 +68,8 @@ public class JsonMessageStreamHandler {
                     // 当流结束（AI 说完了），将内存中拼凑好的完整内容存入数据库
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                    vueProjectBuilder.buildProjectAsync(projectPath);
                 })
                 // --- 4. 错误阶段 (Error) ---
                 .doOnError(error -> {
