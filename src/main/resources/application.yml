@@ -34,14 +34,6 @@ server:
       cookie:
         max-age: 259200
 
-# 微信公众号配置
-wx:
-  mp:
-    app-id: wx81ec9a41a57e8ff6                      # 替换为你的微信公众号AppID
-    secret: 9843726ca27e9c86fc5b5e41fda99b2e       # 替换为你的微信公众号AppSecret
-#    token: 123456
-#    redirect-uri: http://127.0.0.1:8123
-    redirect-url: www.baidu.com
 
 # springdoc-openapi
 springdoc:

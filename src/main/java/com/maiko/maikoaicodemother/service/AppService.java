@@ -1,5 +1,6 @@
 package com.maiko.maikoaicodemother.service;
 
+import com.maiko.maikoaicodemother.model.dto.app.AppAddRequest;
 import com.maiko.maikoaicodemother.model.dto.app.AppQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.App;
 import com.maiko.maikoaicodemother.model.entity.User;
@@ -42,6 +43,14 @@ public interface AppService extends IService<App> {
      * @return List<AppVO> 应用视图对象列表
      */
     List<AppVO> getAppVOList(List<App> appList);
+
+    /**
+     * 创建应用
+     * @param appAddRequest 应用添加请求对象
+     * @param loginUser 当前登录用户信息
+     * @return 应用ID
+     */
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      * 通过对话方式生成代码（流式返回）
