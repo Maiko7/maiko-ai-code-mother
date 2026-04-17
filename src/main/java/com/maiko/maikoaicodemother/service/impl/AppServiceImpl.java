@@ -6,6 +6,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.maiko.maikoaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.maiko.maikoaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.maiko.maikoaicodemother.config.CosClientConfig;
 import com.maiko.maikoaicodemother.constant.AppConstant;
 import com.maiko.maikoaicodemother.core.AiCodeGeneratorFacade;
@@ -78,7 +79,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private CosClientConfig cosClientConfig;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
     @Override
     public Long createApp(AppAddRequest appAddRequest, User loginUser) {
@@ -91,7 +92,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         app.setUserId(loginUser.getId());
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
-        // 使用 AI 智能选择代码生成类型
+        // 使用 AI 智能选择代码生成类型（多例模式）
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
         CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
         app.setCodeGenType(selectedCodeGenType.getValue());
         // 插入数据库

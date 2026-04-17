@@ -7,6 +7,7 @@ import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
 import com.maiko.maikoaicodemother.service.ChatHistoryService;
+import com.maiko.maikoaicodemother.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.swing.*;
 import java.time.Duration;
 
 /**
@@ -36,8 +38,9 @@ public class AiCodeGeneratorServiceFactory {
     // ================= 依赖注入 =================
 
     /** 基础聊天模型（非流式） */
-    @Resource
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
+
 
     /** 流式聊天模型（用于普通代码生成，如 HTML/Multi-file） */
     @Resource
@@ -127,10 +130,12 @@ public class AiCodeGeneratorServiceFactory {
         // 3. 根据类型构建不同的服务配置
         return switch (codeGenType) {
             case VUE_PROJECT -> {
+                StreamingChatModel reasoningStreamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
                 // 【场景：Vue 项目生成】
                 // 特点：任务复杂，需要 AI 自主规划，需要调用工具写文件。
                 // 配置：使用推理模型 + 注册 FileWriteTool 工具。
                 yield AiServices.builder(AiCodeGeneratorService.class)
+                        .chatModel(chatModel)
                         // 强推理模型
                         .streamingChatModel(reasoningStreamingChatModel)
                         // 绑定记忆
@@ -147,6 +152,9 @@ public class AiCodeGeneratorServiceFactory {
                 // 【场景：普通代码生成】
                 // 特点：任务简单，只需输出代码，无需复杂工具调用。
                 // 配置：使用基础流式模型，响应更快。
+
+                // 使用多例模式的StreamingChatModel解决并发问题
+                StreamingChatModel openAiStreamingChatModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
                 yield AiServices.builder(AiCodeGeneratorService.class)
                         .chatModel(chatModel)
                         .streamingChatModel(openAiStreamingChatModel)
