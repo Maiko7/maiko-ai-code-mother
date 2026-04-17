@@ -1,10 +1,11 @@
 package com.maiko.maikoaicodemother.core.handler;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.maiko.maikoaicodemother.ai.model.message.*;
+import com.maiko.maikoaicodemother.ai.tools.BaseTool;
+import com.maiko.maikoaicodemother.ai.tools.ToolManager;
 import com.maiko.maikoaicodemother.constant.AppConstant;
 import com.maiko.maikoaicodemother.core.builder.VueProjectBuilder;
 import com.maiko.maikoaicodemother.model.entity.User;
@@ -34,6 +35,8 @@ public class JsonMessageStreamHandler {
     @Resource
     private VueProjectBuilder vueProjectBuilder;
 
+    @Resource
+    private ToolManager toolManager;
     /**
      * 处理主入口
      *
@@ -103,14 +106,16 @@ public class JsonMessageStreamHandler {
                 // --- 场景 B：AI 请求调用工具（比如决定要写文件了） ---
                 ToolRequestMessage toolRequestMessage = JSONUtil.toBean(chunk, ToolRequestMessage.class);
                 String toolId = toolRequestMessage.getId();
-
+                String toolName = toolRequestMessage.getName();
                 // 逻辑：检查这个工具调用是否已经处理过（去重）
                 if (toolId != null && !seenToolIds.contains(toolId)) {
                     seenToolIds.add(toolId); // 标记为已处理
+                    BaseTool tool = toolManager.getTool(toolName);
+                    return tool.generateToolRequestResponse();
 
-                    // 返回给前端：给用户一个提示，告诉用户“我正在选择工具...”
-                    // 注意：这里不存入 chatHistoryStringBuilder，因为我们只想要最终的代码结果，不需要中间的过程提示
-                    return "\n\n[选择工具] 写入文件\n\n";
+//                    // 返回给前端：给用户一个提示，告诉用户“我正在选择工具...”
+//                    // 注意：这里不存入 chatHistoryStringBuilder，因为我们只想要最终的代码结果，不需要中间的过程提示
+//                    return "\n\n[选择工具] 写入文件\n\n";
                 } else {
                     // 如果是重复的片段，直接吞掉，不发给前端
                     return "";
@@ -122,17 +127,22 @@ public class JsonMessageStreamHandler {
 
                 // 从参数中提取文件路径和内容
                 JSONObject jsonObject = JSONUtil.parseObj(toolExecutedMessage.getArguments());
-                String relativeFilePath = jsonObject.getStr("relativeFilePath");
-                String suffix = FileUtil.getSuffix(relativeFilePath); // 获取后缀名用于高亮
-                String content = jsonObject.getStr("content");
+                // 根据工具名称获取工具实例
+                String toolName = toolExecutedMessage.getName();
+                BaseTool tool = toolManager.getTool(toolName);
+                String result = tool.generateToolExecutedResult(jsonObject);
 
-                // 组装 Markdown 格式的代码块
-                String result = String.format("""
-                        [工具调用] 写入文件 %s
-                        ```%s
-                        %s
-                        ```
-                        """, relativeFilePath, suffix, content);
+//                String relativeFilePath = jsonObject.getStr("relativeFilePath");
+//                String suffix = FileUtil.getSuffix(relativeFilePath); // 获取后缀名用于高亮
+//                String content = jsonObject.getStr("content");
+//
+//                // 组装 Markdown 格式的代码块
+//                String result = String.format("""
+//                        [工具调用] 写入文件 %s
+//                        ```%s
+//                        %s
+//                        ```
+//                        """, relativeFilePath, suffix, content);
 
                 // 格式化输出（加换行）
                 String output = String.format("\n\n%s\n\n", result);

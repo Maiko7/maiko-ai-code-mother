@@ -9,10 +9,12 @@ import com.maiko.maikoaicodemother.mapper.ChatHistoryMapper;
 import com.maiko.maikoaicodemother.model.dto.chathistory.ChatHistoryQueryRequest;
 import com.maiko.maikoaicodemother.model.entity.App;
 import com.maiko.maikoaicodemother.model.entity.ChatHistory;
+import com.maiko.maikoaicodemother.model.entity.ChatSummary;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.maiko.maikoaicodemother.service.AppService;
 import com.maiko.maikoaicodemother.service.ChatHistoryService;
+import com.maiko.maikoaicodemother.service.ChatSummaryService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -41,7 +43,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     private AppService appService;
 
     @Resource
-    private com.maiko.maikoaicodemother.service.ChatSummaryService chatSummaryService;
+    private ChatSummaryService chatSummaryService;
 
     /**
      * 保存对话消息。什么时候添加呢？
@@ -111,7 +113,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
             int loadedCount = 0;
 
             // 1. 加载最新的总结（如果存在）
-            com.maiko.maikoaicodemother.model.entity.ChatSummary latestSummary = 
+            ChatSummary latestSummary =
                     chatSummaryService.getLatestSummary(appId);
             
             if (latestSummary != null) {

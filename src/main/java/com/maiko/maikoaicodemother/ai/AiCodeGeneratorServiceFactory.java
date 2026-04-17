@@ -2,7 +2,7 @@ package com.maiko.maikoaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.maiko.maikoaicodemother.ai.tools.FileWriteTool;
+import com.maiko.maikoaicodemother.ai.tools.*;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
 import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
@@ -54,6 +54,9 @@ public class AiCodeGeneratorServiceFactory {
     /** 业务层服务，用于加载历史聊天记录 */
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
 
     /**
      * 【性能优化】本地缓存：存储已创建的 AI 服务实例
@@ -128,12 +131,16 @@ public class AiCodeGeneratorServiceFactory {
                 // 特点：任务复杂，需要 AI 自主规划，需要调用工具写文件。
                 // 配置：使用推理模型 + 注册 FileWriteTool 工具。
                 yield AiServices.builder(AiCodeGeneratorService.class)
-                        .streamingChatModel(reasoningStreamingChatModel) // 强推理模型
-                        .chatMemoryProvider(memoryId -> chatMemory)      // 绑定记忆
-                        .tools(new FileWriteTool())                      // 赋予 AI 写文件的能力
+                        // 强推理模型
+                        .streamingChatModel(reasoningStreamingChatModel)
+                        // 绑定记忆
+                        .chatMemoryProvider(memoryId -> chatMemory)
+                        // 赋予 AI 写文件的能力
+                        .tools(toolManager.getAllTools())
+                        // 处理幻觉：如果 AI 瞎编工具名，给它一个明确的错误反馈
                         .hallucinatedToolNameStrategy(req -> ToolExecutionResultMessage.from(
                                 req, "Error: 不存在该工具: " + req.name()
-                        )) // 处理幻觉：如果 AI 瞎编工具名，给它一个明确的错误反馈
+                        ))
                         .build();
             }
             case HTML, MULTI_FILE -> {
