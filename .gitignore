@@ -2,7 +2,6 @@
 application-local.yml
 tmp
 Me.md
-
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
