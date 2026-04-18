@@ -3,7 +3,6 @@ package com.maiko.maikoaicodemother.controlller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.maiko.maikoaicodemother.ai.AiCodeGenTypeRoutingService;
 import com.maiko.maikoaicodemother.annotation.AuthCheck;
 import com.maiko.maikoaicodemother.common.BaseResponse;
 import com.maiko.maikoaicodemother.common.DeleteRequest;
@@ -17,6 +16,8 @@ import com.maiko.maikoaicodemother.model.dto.app.*;
 import com.maiko.maikoaicodemother.model.entity.App;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.vo.AppVO;
+import com.maiko.maikoaicodemother.ratelimter.annotation.RateLimit;
+import com.maiko.maikoaicodemother.ratelimter.enums.RateLimitType;
 import com.maiko.maikoaicodemother.service.AppService;
 import com.maiko.maikoaicodemother.service.ProjectDownloadService;
 import com.maiko.maikoaicodemother.service.UserService;
@@ -27,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -57,8 +59,6 @@ public class AppController {
     @Resource
     private ProjectDownloadService projectDownloadService;
 
-    @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
 
 
     /**
@@ -123,6 +123,7 @@ public class AppController {
      * @return 生成结果流
      */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RateLimit(limitType = RateLimitType.USER, rate = 5, rateInterval = 60, message = "AI对话请求过于频繁，请稍后再试")
     @Operation(summary = "聊天生成代码", description = "通过对话方式流式生成代码（SSE），实时返回生成进度")
     // 它这里为什么没封装对象，因为是get请求
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId, @RequestParam String message, HttpServletRequest request) {
@@ -308,6 +309,11 @@ public class AppController {
      * @return 精选应用列表
      */
     @PostMapping("/good/list/page/vo")
+    @Cacheable(
+            value = "good_app_page",
+            key = "T(com.maiko.maikoaicodemother.utils.CacheKeyUtils).generateKey(#appQueryRequest)",
+            condition = "#appQueryRequest.pageNum <= 10"
+    )
     @Operation(summary = "获取精选应用列表", description = "分页获取精选的优质应用列表")
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);

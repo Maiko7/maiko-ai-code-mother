@@ -6,7 +6,6 @@ import cn.hutool.json.JSONUtil;
 import com.maiko.maikoaicodemother.ai.model.message.*;
 import com.maiko.maikoaicodemother.ai.tools.BaseTool;
 import com.maiko.maikoaicodemother.ai.tools.ToolManager;
-import com.maiko.maikoaicodemother.constant.AppConstant;
 import com.maiko.maikoaicodemother.core.builder.VueProjectBuilder;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
@@ -71,8 +70,8 @@ public class JsonMessageStreamHandler {
                     // 当流结束（AI 说完了），将内存中拼凑好的完整内容存入数据库
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
-                    vueProjectBuilder.buildProjectAsync(projectPath);
+//                    String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+//                    vueProjectBuilder.buildProjectAsync(projectPath);
                 })
                 // --- 4. 错误阶段 (Error) ---
                 .doOnError(error -> {

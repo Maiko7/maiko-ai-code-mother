@@ -43,11 +43,11 @@ public class AiCodeGeneratorServiceFactory {
 
 
     /** 流式聊天模型（用于普通代码生成，如 HTML/Multi-file） */
-    @Resource
+    @Resource(name = "streamingChatModelPrototype")
     private StreamingChatModel openAiStreamingChatModel;
 
     /** 推理流式聊天模型（用于复杂任务，如 Vue 项目生成） */
-    @Resource
+    @Resource(name = "reasoningStreamingChatModelPrototype")
     private StreamingChatModel reasoningStreamingChatModel;
 
     /** Redis 聊天记忆存储，实现对话历史的持久化 */

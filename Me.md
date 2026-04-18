@@ -290,6 +290,9 @@
 >   👉 选 **队列模式**。慢慢跑，别把机器累死。
 
 28. 你写工具类的时候，你要和鱼皮一样就是写一个工具类然后立马去写测试类。
+28. 你看你解决那个SpringContextUtil为空的问题，你怀疑lingma不够智能了。其实是你自己提的不够清晰，你看你后面跟他说博主这个没改，它就去别的地方改了就解决了。所以说**不是你用的东西不好而是你自己不用提需求**。
+28. 他新建一个ratelimter包，如果你不想用这个限流 直接删除这个包即可。不用嵌入在其他的包中。
+28. 
 
 # 编码
 
@@ -964,15 +967,15 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 >      *   2. 分别把 HTML、CSS、JS 内容写入对应的文件名（index.html, style.css, script.js）。
 >      *   3. 如果某个内容为空（比如 CSS），writeToFile 内部会自动跳过（基于之前的代码逻辑）。
 >           */
->            @Override
->            protected void saveFiles(MultiFileCodeResult result, String baseDirPath) {
+>              @Override
+>              protected void saveFiles(MultiFileCodeResult result, String baseDirPath) {
 >             // 保存 HTML 文件 -> index.html
 >             writeToFile(baseDirPath, "index.html", result.getHtmlCode());
 >             // 保存 CSS 文件 -> style.css
 >             writeToFile(baseDirPath, "style.css", result.getCssCode());
 >             // 保存 JavaScript 文件 -> script.js
 >             writeToFile(baseDirPath, "script.js", result.getJsCode());
->            }
+>              }
 >
 >     /**
 >      * 【实现3：自定义校验】
@@ -1403,3 +1406,129 @@ flowchart TD
 ]
 ```
 
+
+
+---
+
+
+
+> 你帮我解释一下mcp和skills 我有了mcp我干嘛还要skills 或者说我有了skills我为什么还要mcp？先一句话说结论
+>
+> **MCP 是「工具的底层通道」，Skills 是「给 AI 定的使用规则 / 指令模板」。**
+>
+> 它们俩不是二选一的关系，而是**配合起来用效果翻倍**，谁也替代不了谁。
+>
+> ------
+>
+> ## 一、先搞懂：它们分别是什么？
+>
+> ### 1. MCP（Model Context Protocol）= 工具的「底层接口 / 通道」
+>
+> 你可以把它理解成：**给 Cursor 装的「硬件接口」，让 AI 能和外部服务连接**。
+>
+> - 它解决的是：**AI 能不能调用这个工具**的问题
+> - 比如你配置的 Firecrawl MCP，本质是给 Cursor 开了一条能和 Firecrawl 服务器通信的通道
+> - 配置好之后，AI 才有「爬网页」这个能力，但它**不一定知道什么时候用、怎么用**
+>
+> 举个例子：
+>
+> MCP 就像给电脑插了个「网线」，电脑能上网了，但你得自己知道「要开浏览器、输入网址」才能用。
+>
+> ------
+>
+> ### 2. Skills = 给 AI 写的「使用说明书 / 指令模板」
+>
+> 你可以把它理解成：**给 AI 定的「使用规则」，告诉它什么时候用、怎么用这些工具**。
+>
+> - 它解决的是：**AI 会不会主动、正确地调用工具**的问题
+> - 比如你写一个 Skill：「当用户让我查某个框架的用法时，必须用 Context7 查最新文档，不准瞎编」
+> - 有了这个 Skill，AI 就不会偷懒说 “我不能联网”，而是会主动调用 Context7
+>
+> 举个例子：
+>
+> Skills 就像给浏览器写的「使用教程」，告诉电脑：“用户说‘查资料’的时候，就打开浏览器搜官网，别乱猜。”
+>
+> ------
+>
+> ## 二、为什么有了 MCP 还要 Skills？
+>
+> 光有 MCP，AI 经常会出现这些问题：
+>
+> 1. **它根本忘了自己有这个工具**：就算你装了 Firecrawl，AI 还是会说 “我无法访问外部网页”
+> 2. **它用不对工具**：明明该用 Context7 查文档，它却用 Firecrawl 爬博客文章，效率极低
+> 3. **它不会用工具的结果**：就算调用了工具，也不知道怎么把返回的文档内容整合到代码里
+>
+> 而 Skills 就是来解决这些问题的：
+>
+> - 它会给 AI 明确的触发条件：「当用户问 XX 问题时，必须调用 XX 工具」
+> - 它会给 AI 规定使用方式：「调用工具时要传哪些参数、怎么解析返回结果」
+> - 它会给 AI 输出要求：「拿到结果后要怎么整理、怎么写进代码里」
+>
+> ------
+>
+> ## 三、反过来，为什么有了 Skills 还要 MCP？
+>
+> 光有 Skills，AI 也会变成「纸上谈兵」：
+>
+> - 你写了 Skill 说 “要查最新文档”，但没配置 Context7 MCP，AI 根本没地方查，还是只能瞎编
+> - 你写了 Skill 说 “要爬取网页内容”，但没配置 Firecrawl MCP，AI 连和服务器通信的通道都没有，根本执行不了
+>
+> 简单说：
+>
+> **没有 MCP，Skills 就是空指令；没有 Skills，MCP 就是闲置的功能。**
+>
+> ------
+>
+> ## 四、举个完整的例子，你就彻底懂了
+>
+> 假设你要让 AI 帮你写一个 SpringBoot 接口：
+>
+> 1. **MCP 部分**：你配置了 Context7 和 Firecrawl 的 MCP，Cursor 有了查文档和爬网页的能力
+>
+> 2. Skills 部分
+>
+>    ：你写了一个 Skill：
+>
+>    > 「当用户让我写 SpringBoot 接口时：
+>    >
+>    > 
+>    >
+>    > 1. 必须先用 Context7 查 SpringBoot 3.x 的官方文档，确认最新注解用法
+>    > 2. 再用 Firecrawl 爬取 Spring 官方教程的示例代码
+>    > 3. 结合文档和示例，写出规范的接口代码，并附上注释」
+>    >
+>    > 
+>
+>    
+>
+> - 没有 MCP：AI 只能瞎编旧版代码
+> - 没有 Skills：AI 可能直接写个旧版代码，根本不会主动去查文档
+> - 两者都有：AI 会严格按你的规则，先查文档、再爬示例，写出规范的新版代码
+>
+> ------
+>
+> ## 五、总结一下
+>
+> | 对比项           | MCP                   | Skills                   |
+> | ---------------- | --------------------- | ------------------------ |
+> | **本质**         | 工具的底层通道 / 接口 | AI 的使用规则 / 指令模板 |
+> | **解决的问题**   | AI 能不能调用工具     | AI 会不会正确调用工具    |
+> | **核心作用**     | 提供「能力」          | 规范「使用方式」         |
+> | **谁能替代谁？** | 不能                  | 不能                     |
+>
+> 它们俩是**互补关系**，一起用才能让 Cursor 变成一个「主动、高效、不瞎编」的开发助手。
+
+
+
+
+
+---
+
+
+
+> cursor左边的那个调大调小的
+>
+> ### 2. 想调大**整个界面UI**（包括侧边栏、文件树文字、标签栏等）
+>
+> - **方法**：设置中搜索 `Window Zoom Level` 或 `Zoom Level` → 增大数值（例如设为 1 或 2）。
+> - **快捷方式**：部分版本支持 `Ctrl + Shift + =` / `Cmd + Shift + =` 调整UI缩放。

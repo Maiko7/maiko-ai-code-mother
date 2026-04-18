@@ -10,7 +10,6 @@ import com.maiko.maikoaicodemother.model.entity.ChatHistory;
 import com.maiko.maikoaicodemother.model.entity.ChatSummary;
 import com.maiko.maikoaicodemother.model.entity.User;
 import com.maiko.maikoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
-import com.maiko.maikoaicodemother.service.AppService;
 import com.maiko.maikoaicodemother.service.ChatHistoryService;
 import com.maiko.maikoaicodemother.service.ChatSummaryService;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -35,10 +34,6 @@ public class ChatSummaryServiceImpl extends ServiceImpl<ChatSummaryMapper, ChatS
     @Resource
     @Lazy
     private ChatHistoryService chatHistoryService;
-
-    @Resource
-    @Lazy
-    private AppService appService;
 
     @Resource
     @Lazy
