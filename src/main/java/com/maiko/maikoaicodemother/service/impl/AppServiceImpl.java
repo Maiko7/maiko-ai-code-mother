@@ -25,6 +25,8 @@ import com.maiko.maikoaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
 import com.maiko.maikoaicodemother.model.vo.AppVO;
 import com.maiko.maikoaicodemother.model.vo.UserVO;
+import com.maiko.maikoaicodemother.monitor.MonitorContext;
+import com.maiko.maikoaicodemother.monitor.MonitorContextHolder;
 import com.maiko.maikoaicodemother.service.*;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -147,9 +149,16 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         }
         // 5. 通过校验后，添加用户消息到对话历史
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
-        // 6. 调用 AI 生成代码（流式）
+        // 6. 设置监控上下文（用户ID和应用ID）
+        MonitorContextHolder.setContext(
+                MonitorContext.builder()
+                        .userId(loginUser.getId().toString())
+                        .appId(appId.toString())
+                        .build()
+        );
+        // 7. 调用 AI 生成代码（流式）
         Flux<String> contentFlux = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
-        // 7. 收集AI响应内容并在完成后记录到对话历史
+        // 8. 收集AI响应内容并在完成后记录到对话历史
         Flux<String> resultFlux = streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum);
 
         // 【关键修改】在这里继续链式调用，追加业务逻辑
@@ -179,11 +188,16 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
                     // 1. 增加应用对话轮数
                     this.incrementAppTotalRounds(appId);
-
                     // 2. 检查是否需要智能总结
                     this.checkAndSummarizeIfNeeded(appId, loginUser);
-
                     log.info("对话处理全流程结束，轮数已增加，总结检查完毕");
+                })
+                // 【阶段二：资源清理】
+                // 无论成功还是失败（异常/取消），最后都会执行这里
+                .doFinally(signalType -> {
+                    // 清理 ThreadLocal，防止内存泄漏
+                    MonitorContextHolder.clearContext();
+                    log.debug("监控上下文已清理，信号类型: {}", signalType);
                 });
 //        StringBuilder aiResponseBuilder = new StringBuilder();
 //        return contentFlux

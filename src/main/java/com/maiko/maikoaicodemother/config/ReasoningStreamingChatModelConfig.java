@@ -1,12 +1,16 @@
 package com.maiko.maikoaicodemother.config;
 
+import com.maiko.maikoaicodemother.monitor.AiModelMonitorListener;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import jakarta.annotation.Resource;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+
+import java.util.List;
 
 /**
  * 推理流式聊天模型配置类
@@ -23,6 +27,9 @@ import org.springframework.context.annotation.Scope;
 @ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
 @Data
 public class ReasoningStreamingChatModelConfig {
+
+    @Resource
+    private AiModelMonitorListener aiModelMonitorListener;
 
     /**
      * OpenAI API 的基础 URL
@@ -101,6 +108,7 @@ public class ReasoningStreamingChatModelConfig {
                 .temperature(temperature) // 设置温度参数
                 .logRequests(logRequests) // 设置请求日志开关
                 .logResponses(logResponses) // 设置响应日志开关
+                .listeners(List.of(aiModelMonitorListener))
                 .build();                 // 构建最终对象
     }
 }
