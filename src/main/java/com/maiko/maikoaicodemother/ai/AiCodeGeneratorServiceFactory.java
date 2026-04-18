@@ -2,6 +2,8 @@ package com.maiko.maikoaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.maiko.maikoaicodemother.ai.guardrail.PromptSafetyInputGuardrail;
+import com.maiko.maikoaicodemother.ai.guardrail.RetryOutputGuardrail;
 import com.maiko.maikoaicodemother.ai.tools.*;
 import com.maiko.maikoaicodemother.exception.BusinessException;
 import com.maiko.maikoaicodemother.exception.ErrorCode;
@@ -146,6 +148,8 @@ public class AiCodeGeneratorServiceFactory {
                         .hallucinatedToolNameStrategy(req -> ToolExecutionResultMessage.from(
                                 req, "Error: 不存在该工具: " + req.name()
                         ))
+                        .inputGuardrails(new PromptSafetyInputGuardrail())  // 添加输入护轨
+                        .outputGuardrails(new RetryOutputGuardrail())   // 添加输出护轨
                         .build();
             }
             case HTML, MULTI_FILE -> {
@@ -159,6 +163,8 @@ public class AiCodeGeneratorServiceFactory {
                         .chatModel(chatModel)
                         .streamingChatModel(openAiStreamingChatModel)
                         .chatMemory(chatMemory) // 绑定记忆
+                        .inputGuardrails(new PromptSafetyInputGuardrail())  // 添加输入护轨
+                        .outputGuardrails(new RetryOutputGuardrail())   // 添加输出护轨
                         .build();
             }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR,
