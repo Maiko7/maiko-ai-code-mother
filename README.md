@@ -1,172 +1,211 @@
 # Maiko AI Code Mother
 
-> 一个基于 AI 大模型的**零代码前端应用生成平台**后端服务。用户只需用自然语言描述需求，即可通过 AI 流式生成 HTML/CSS/JS 前端代码，并一键部署到服务器上访问。
+> 🚀 **AI 驱动的全栈应用智能生成平台** - 从自然语言到完整 Vue 项目的零代码开发体验
+> 
+> 用户只需用自然语言描述需求,AI 即可流式生成完整的 **Vue 3 + Vite** 前端项目,并支持一键部署、自动截图、智能记忆管理等企业级功能。
 
 ---
 
-## 项目简介
+## ✨ 核心特性
 
-本项目是一个 AI 驱动的前端代码生成平台，核心功能是让用户通过对话描述需求，AI 实时生成完整的前端应用（支持单 HTML 文件和 HTML+CSS+JS 三文件模式），并提供应用部署、对话历史记录、智能记忆管理等完整功能。
+### 🎯 AI 代码生成
+- **流式输出**: 基于 SSE (Server-Sent Events) 实现打字机效果的实时代码生成
+- **多模式支持**: 
+  - 🔹 HTML 单文件模式 (CSS + JS 内联)
+  - 🔹 多文件模式 (index.html + style.css + script.js)
+  - 🔹 **Vue 工程模式** (Vue 3 + Vite + 组件化架构) ⭐ NEW
+- **智能工具调用**: AI 可自主读写文件、创建目录、删除文件,实现真正的自动化开发
+- **代码质量检查**: 内置 AI 代码审查节点,确保生成代码符合最佳实践
 
-**作者**：代码卡壳Maiko7
+### 🌐 应用全生命周期管理
+- **一键部署**: 自动生成 deployKey,将代码部署为可访问的静态网站
+- **自动截图**: 部署后异步生成应用封面图,上传至腾讯云 COS
+- **封面兜底机制**: 默认封面保障前端永不出现裂图 ⭐ NEW
+- **资源清理**: 删除应用时同步清理云端封面文件,定时清理本地临时文件 ⭐ NEW
+- **代码下载**: 智能过滤冗余文件(node_modules/.git等),打包为 ZIP 供用户下载
+
+### 💬 智能对话系统
+- **上下文记忆**: 基于 Redis 持久化每个应用的独立对话历史
+- **智能总结**: 达到 10 轮对话后,异步触发 AI 生成"会议纪要式"总结,压缩 Token 消耗
+- **游标分页**: 高效查询历史对话记录
+- **导出功能**: 支持导出对话为 Markdown 文件(含时间范围筛选)
+
+### 👥 完善的用户体系
+- **多种登录方式**:
+  - 📧 账号密码注册/登录 (MD5+Salt 加密)
+  - 📱 手机号验证码登录 (60s 频率限制)
+  - 💬 微信公众号 OAuth2.0 登录
+- **角色权限**: user / admin / vip / editor / partner / ban
+- **Session 管理**: Redis 持久化,30 天有效期
+- **AOP 权限拦截**: 基于 `@AuthCheck` 注解的细粒度权限控制
+
+### 🛡️ 企业级特性
+- **LangGraph4j 工作流**: 可视化编排复杂的 AI Agent 工作流
+- **并发图像收集**: 并行收集 Logo/插图/图表等多类型资源
+- **提示词安全护栏**: 输入输出双重校验,防止恶意注入
+- **监控告警**: Prometheus + Actuator 实时监控
+- **API 文档**: Knife4j (OpenAPI 3) 自动生成接口文档
 
 ---
 
-## 技术栈
+## 🏗️ 技术栈
 
 | 分类 | 技术 | 版本 |
-|---|---|---|
-| 核心框架 | Spring Boot | 3.5.13 |
-| Java 版本 | Java | 21 |
-| ORM | MyBatis-Flex | 1.11.0 |
-| 数据库 | MySQL | 8.x |
-| 缓存 | Redis + Caffeine | — |
-| AI 框架 | LangChain4j | 1.1.0 |
-| AI 模型 | DeepSeek Chat | — |
-| 流式输出 | LangChain4j Reactor (SSE) | 1.1.0-beta7 |
-| AI 记忆存储 | LangChain4j Community Redis | 1.1.0-beta7 |
-| Session 管理 | Spring Session Data Redis | — |
-| 微信登录 | WxJava (weixin-java-mp) | 4.6.0 |
-| API 文档 | Knife4j (OpenAPI 3) | 4.4.0 |
-| 工具库 | Hutool | 5.8.38 |
+|------|------|------|
+| **核心框架** | Spring Boot | 3.5.13 |
+| **Java 版本** | Java | 21 (虚拟线程) |
+| **ORM 框架** | MyBatis-Flex | 1.11.0 |
+| **数据库** | MySQL | 8.x |
+| **缓存** | Redis + Caffeine | - |
+| **AI 框架** | LangChain4j | 1.1.0 |
+| **工作流引擎** | LangGraph4j | 1.6.0-rc2 |
+| **AI 模型** | DeepSeek Chat / Qwen | - |
+| **流式输出** | LangChain4j Reactor (SSE) | 1.1.0-beta7 |
+| **记忆存储** | LangChain4j Community Redis | 1.1.0-beta7 |
+| **Session 管理** | Spring Session Data Redis | - |
+| **微信 SDK** | WxJava (weixin-java-mp) | 4.6.0 |
+| **API 文档** | Knife4j (OpenAPI 3) | 4.4.0 |
+| **对象存储** | 腾讯云 COS SDK | 5.6.227 |
+| **网页截图** | Selenium + WebDriverManager | 4.33.0 / 6.1.0 |
+| **工具库** | Hutool | 5.8.38 |
+| **分布式锁** | Redisson | 3.50.0 |
+| **监控** | Micrometer + Prometheus | - |
 
 ---
 
-## 核心功能
-
-### 1. AI 代码生成（流式 SSE）
-- 用户通过自然语言描述需求，AI 实时流式生成前端代码
-- 支持两种生成模式：
-  - **HTML 模式**：生成单个完整的 `.html` 文件（CSS + JS 内联）
-  - **多文件模式**：生成 `index.html` + `style.css` + `script.js` 三个独立文件
-- 使用 Server-Sent Events（SSE）实现打字机效果的实时输出
-
-### 2. 应用管理
-- 创建、更新、删除应用
-- 应用支持自定义 `initPrompt`（系统提示词），为 AI 设定专属角色
-- 精选应用功能（`priority=99` 为精选应用）
-- 记录每个应用的对话总轮数
-
-### 3. 应用部署
-- 一键将生成的代码部署到服务器，生成可访问的 URL
-- 通过唯一 `deployKey` 标识应用，提供静态文件访问服务
-
-### 4. 对话历史
-- 自动保存每轮对话（用户消息 + AI 回复）
-- 支持游标分页查询历史记录
-- 支持导出为 Markdown 文件（含时间范围筛选）
-
-### 5. 智能记忆管理
-- 基于 Redis 持久化 AI 对话记忆，保障上下文连贯性
-- **智能总结**：当未总结对话达到 10 轮时，自动触发 AI 异步生成「会议纪要式」总结，压缩历史上下文，有效降低 Token 消耗
-- 每个应用拥有独立、隔离的对话记忆
-
-### 6. 用户体系
-- **账号密码注册/登录**（MD5+Salt 加密）
-- **手机号验证码登录**（Redis 存储验证码，60s 发送频率限制）
-- **微信公众号 OAuth2.0 登录**
-- Session 持久化存储于 Redis，有效期 30 天
-- 多角色权限体系：`user` / `admin` / `vip` / `editor` / `partner` / `ban`
-- 基于 AOP 的 `@AuthCheck` 注解权限拦截
-
----
-
-## 项目结构
+## 📂 项目结构
 
 ```
 src/main/java/com/maiko/maikoaicodemother/
 ├── ai/                        # AI 服务层
-│   ├── AiCodeGeneratorService.java        # AI 代码生成接口（LangChain4j）
-│   ├── AiCodeGeneratorServiceFactory.java # AI 服务工厂（含 Caffeine 缓存）
-│   └── ChatSummaryAiService.java          # 对话总结 AI 接口
+│   ├── AiCodeGeneratorService.java        # AI 代码生成接口
+│   ├── AiCodeGeneratorServiceFactory.java # 工厂模式 + Caffeine 缓存
+│   ├── ChatSummaryAiService.java          # 对话总结 AI 服务
+│   ├── tools/                             # AI 工具集 (FileRead/Write/Delete/Modify)
+│   └── guardrail/                         # 安全护栏 (输入输出校验)
 ├── aop/                       # AOP 切面
-│   └── MultiRoleAuthInterceptor.java      # 多角色权限拦截器
+│   └── AuthInterceptor.java               # 权限拦截器
 ├── config/                    # 配置类
 │   ├── CorsConfig.java                    # 跨域配置
 │   ├── RedisConfig.java                   # Redis 序列化配置
-│   ├── RedisChatMemoryStoreConfig.java    # AI 记忆 Redis 存储配置
+│   ├── CosClientConfig.java               # 腾讯云 COS 配置
+│   ├── RoutingAiModelConfig.java          # AI 模型路由配置
 │   └── WxMpConfiguration.java            # 微信公众号配置
-├── controlller/               # 控制层
-│   ├── AppController.java                 # 应用管理接口
-│   ├── ChatHistoryController.java         # 对话历史接口
-│   ├── UserController.java                # 用户管理接口
-│   └── StaticResourceController.java     # 静态资源访问（已部署应用）
-├── core/                      # 核心业务
-│   ├── AiCodeGeneratorFacade.java         # 门面模式：统一代码生成入口
-│   ├── parser/                            # 策略模式：代码解析器
-│   └── saver/                             # 模板方法模式：代码文件保存器
+├── controller/                # 控制层
+│   ├── AppController.java                 # 应用管理 (CRUD/部署/下载/截图)
+│   ├── ChatHistoryController.java         # 对话历史管理
+│   ├── UserController.java                # 用户管理 (注册/登录/权限)
+│   └── StaticResourceController.java     # 静态资源访问 (已部署应用)
+├── core/                      # 核心业务逻辑
+│   ├── AiCodeGeneratorFacade.java         # 门面模式:统一代码生成入口
+│   ├── builder/VueProjectBuilder.java     # Vue 项目构建器 (npm install/build)
+│   ├── parser/                            # 策略模式:代码解析器
+│   ├── saver/                             # 模板方法:代码文件保存器
+│   └── handler/                           # 流式消息处理器
+├── langgraph4j/               # LangGraph 工作流 ⭐ NEW
+│   ├── CodeGenWorkflow.java               # 主工作流 (Prompt增强→代码生成→质量检查)
+│   ├── node/                              # 工作流节点
+│   │   ├── PromptEnhancerNode.java        # 提示词优化节点
+│   │   ├── CodeGeneratorNode.java         # 代码生成节点
+│   │   ├── CodeQualityCheckNode.java      # 代码质量检查节点
+│   │   └── ImageCollectorNode.java        # 图像资源收集节点
+│   └── state/WorkflowContext.java         # 工作流上下文状态
+├── manager/                   # 第三方服务管理器
+│   ├── CosManager.java                    # COS 对象存储管理 (上传/删除)
+│   └── WxMpServiceManager.java           # 微信服务管理
+├── service/                   # 业务服务层
+│   ├── impl/AppServiceImpl.java           # 应用服务 (含截图/部署/清理逻辑)
+│   ├── impl/ScreenshotServiceImpl.java    # 截图服务 (Selenium + COS)
+│   └── impl/ProjectDownloadServiceImpl.java # 项目下载服务 (ZIP 打包)
+├── task/                      # 定时任务 ⭐ NEW
+│   └── FileCleanupTask.java               # 本地临时文件清理任务
 ├── model/                     # 数据模型
-│   ├── entity/                            # 实体类
+│   ├── entity/                            # 实体类 (App/User/ChatHistory/ChatSummary)
 │   ├── dto/                               # 请求 DTO
 │   ├── vo/                                # 响应 VO
 │   └── enums/                             # 枚举类
-├── service/                   # 服务接口 + 实现
 └── mapper/                    # MyBatis-Flex Mapper
 ```
 
 ---
 
-## 数据库设计
+## 🗄️ 数据库设计
 
 ### 快速初始化
-
-执行 `sql/create_table.sql` 完成建库建表：
-
-```sql
-create database if not exists maiko_ai_code_mother;
-```
-
-### 核心表说明
-
-| 表名 | 说明 |
-|---|---|
-| `user` | 用户表（支持账号密码/手机/微信三种登录方式） |
-| `app` | 应用表（含 initPrompt、部署信息、对话轮数等） |
-| `chat_history` | 对话历史表（用户消息 + AI 回复，含总结状态） |
-| `chat_summary` | 对话总结表（AI 自动生成的会议纪要式摘要） |
-
----
-
-## 快速开始
-
-### 1. 环境准备
-
-| 工具 | 版本要求 |
-|---|---|
-| JDK | 21+ |
-| MySQL | 8.x |
-| Redis | 6.x+ |
-| Maven | 3.6+ |
-
-### 2. 初始化数据库
 
 ```bash
 mysql -u root -p < sql/create_table.sql
 ```
 
-### 3. 配置文件
+### 核心表说明
 
-修改 `src/main/resources/application.yml` 中的数据库连接信息：
+| 表名 | 说明 | 关键字段 |
+|------|------|---------|
+| `user` | 用户表 | id, username, password, phone, wxOpenId, userRole |
+| `app` | 应用表 | id, appName, **cover**, codeGenType, **deployKey**, totalRounds, userId |
+| `chat_history` | 对话历史表 | id, appId, messageType, content, isSummarized |
+| `chat_summary` | 对话总结表 | id, appId, summaryContent, createdAt |
+
+### 字段说明
+
+**app 表新增字段**:
+- `cover`: 应用封面图 URL (COS 地址或默认 `/images/Mango.png`)
+- `deployKey`: 部署唯一标识 (6位随机字符串)
+- `deployedTime`: 部署时间
+- `totalRounds`: 对话总轮数
+
+---
+
+## 🚀 快速开始
+
+### 1️⃣ 环境准备
+
+| 工具 | 版本要求 | 说明 |
+|------|---------|------|
+| JDK | 21+ | 必须支持虚拟线程 |
+| MySQL | 8.x | 关系型数据库 |
+| Redis | 6.x+ | 缓存 + Session + AI 记忆 |
+| Maven | 3.6+ | 项目构建 |
+| Node.js | 18+ | Vue 项目构建 (可选) |
+| Chrome | 最新版 | 网页截图 (自动下载驱动) |
+
+### 2️⃣ 初始化数据库
+
+```bash
+# 执行建库建表脚本
+mysql -u root -p < sql/create_table.sql
+
+# 如需迁移旧库,按需执行
+mysql -u root -p < sql/alter_table_add_login_fields.sql
+mysql -u root -p < sql/alter_table_add_total_rounds.sql
+mysql -u root -p < sql/alter_table_add_chat_summary.sql
+```
+
+### 3️⃣ 配置文件
+
+#### 修改 `application.yml`
 
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/maiko_ai_code_mother
+    url: jdbc:mysql://localhost:3306/maiko_ai_code_mother?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: 你的密码
+    password: 你的MySQL密码
   data:
     redis:
       host: localhost
       port: 6379
+      password: 你的Redis密码 (如无密码留空)
 ```
 
-创建 `src/main/resources/application-local.yml`（已在 `.gitignore` 中排除，**不要提交到 Git**）并填写 AI 配置：
+#### 创建 `application-local.yml` (不提交到 Git)
 
 ```yaml
+# AI 模型配置
 langchain4j:
   open-ai:
     chat-model:
-      base-url: https://api.deepseek.com   # DeepSeek 或其他 OpenAI 兼容接口
+      base-url: https://api.deepseek.com
       api-key: sk-xxxxxxxxxxxxxxxxxxxx
       model-name: deepseek-chat
       max-tokens: 8192
@@ -177,140 +216,425 @@ langchain4j:
       api-key: sk-xxxxxxxxxxxxxxxxxxxx
       model-name: deepseek-chat
       max-tokens: 8192
-```
 
-> **注意**：`application-local.yml` 中包含 AI API Key 等敏感信息，已配置 `.gitignore` 防止提交，请勿上传到公开仓库。
+# 腾讯云 COS 配置
+cos:
+  client:
+    host: your-bucket.cos.ap-guangzhou.myqcloud.com
+    secretId: AKIDxxxxxxxxxxxxxxxxxxxx
+    secretKey: xxxxxxxxxxxxxxxxxxxx
+    region: ap-guangzhou
+    bucket: your-bucket
 
-### 4. 配置微信公众号（可选）
-
-若需使用微信登录，修改 `application.yml` 中的微信配置：
-
-```yaml
+# 微信公众号配置 (可选)
 wx:
   mp:
-    app-id: 你的微信公众号AppID
-    secret: 你的微信公众号AppSecret
+    app-id: your-wx-appid
+    secret: your-wx-secret
 ```
 
-### 5. 启动项目
+> ⚠️ **安全提醒**: `application-local.yml` 包含敏感信息,已在 `.gitignore` 中排除,**严禁提交到公开仓库**。
+
+### 4️⃣ 启动项目
 
 ```bash
+# 编译并启动
 mvn clean spring-boot:run
+
+# 或使用 IDE 直接运行 MaikoAiCodeMotherApplication
 ```
 
-服务启动后访问：
-- 服务地址：`http://localhost:8123/api`
-- API 文档：`http://localhost:8123/api/doc.html`
+服务启动后访问:
+- **API 地址**: `http://localhost:8123/api`
+- **API 文档**: `http://localhost:8123/api/doc.html`
+- **健康检查**: `http://localhost:8123/api/health/`
+- **监控指标**: `http://localhost:8123/api/actuator/prometheus`
 
 ---
 
-## API 接口概览
+## 📖 API 接口概览
 
-接口前缀：`/api`（Context-Path）
+接口前缀: `/api`
 
-### 用户模块 `/user`
+### 🔐 用户模块 `/user`
 
 | 方法 | 路径 | 说明 | 权限 |
-|---|---|---|---|
+|------|------|------|------|
 | POST | `/user/register` | 账号密码注册 | 无 |
 | POST | `/user/login` | 账号密码登录 | 无 |
-| GET | `/user/get/login` | 获取当前登录用户 | 登录 |
-| POST | `/user/logout` | 退出登录 | 登录 |
 | POST | `/user/send/code` | 发送手机验证码 | 无 |
 | POST | `/user/login/phone` | 手机号验证码登录 | 无 |
 | POST | `/user/login/wx` | 微信公众号登录 | 无 |
+| GET | `/user/get/login` | 获取当前登录用户 | 登录 |
+| POST | `/user/logout` | 退出登录 | 登录 |
 | POST | `/user/add` | 创建用户 | Admin |
 | POST | `/user/delete` | 删除用户 | Admin |
 | POST | `/user/update` | 更新用户 | Admin |
 | GET | `/user/get` | 根据 ID 获取用户 | Admin |
 | POST | `/user/list/page/vo` | 分页获取用户列表 | Admin |
 
-### 应用模块 `/app`
+### 📱 应用模块 `/app`
 
 | 方法 | 路径 | 说明 | 权限 |
-|---|---|---|---|
-| GET | `/app/chat/gen/code` | AI 流式生成代码（SSE） | 登录 |
-| POST | `/app/deploy` | 部署应用 | 登录 |
+|------|------|------|------|
 | POST | `/app/add` | 创建应用 | 登录 |
-| POST | `/app/update` | 更新应用（本人） | 登录 |
-| POST | `/app/delete` | 删除应用（本人/Admin） | 登录 |
-| GET | `/app/get/vo` | 获取应用详情 | 无 |
+| POST | `/app/update` | 更新应用 | 本人 |
+| POST | `/app/delete` | 删除应用 (含云端封面清理) | 本人/Admin |
+| GET | `/app/get/vo` | 获取应用详情 (封面兜底) | 无 |
 | POST | `/app/my/list/page/vo` | 获取我的应用列表 | 登录 |
 | POST | `/app/good/list/page/vo` | 获取精选应用列表 | 无 |
+| GET | `/app/chat/gen/code` | **AI 流式生成代码 (SSE)** | 登录 |
+| POST | `/app/deploy` | **部署应用 + 自动截图** | 登录 |
+| GET | `/app/download/{appId}` | **下载应用代码 (ZIP)** | 登录 |
 | POST | `/app/admin/update` | 管理员更新应用 | Admin |
 | POST | `/app/admin/delete` | 管理员删除应用 | Admin |
 | POST | `/app/admin/list/page/vo` | 管理员查询应用列表 | Admin |
 | GET | `/app/admin/get/vo` | 管理员获取应用详情 | Admin |
 
-### 对话历史模块 `/chatHistory`
+### 💬 对话历史模块 `/chatHistory`
 
 | 方法 | 路径 | 说明 | 权限 |
-|---|---|---|---|
+|------|------|------|------|
 | GET | `/chatHistory/app/{appId}` | 游标分页查询对话历史 | 登录 |
-| POST | `/chatHistory/export` | 导出对话历史为 Markdown | 登录（创建者/Admin） |
+| POST | `/chatHistory/export` | 导出对话为 Markdown | 创建者/Admin |
 | POST | `/chatHistory/admin/list/page/vo` | 管理员分页查询全部记录 | Admin |
 
-### 其他
+### 🌐 其他接口
 
 | 方法 | 路径 | 说明 |
-|---|---|---|
+|------|------|------|
 | GET | `/health/` | 健康检查 |
 | GET | `/static/{deployKey}/**` | 访问已部署的应用静态资源 |
+| GET | `/images/Mango.png` | 默认封面图 |
 
 ---
 
-## 关键设计说明
+## 🎯 核心功能详解
 
-### 门面模式（Facade）
-`AiCodeGeneratorFacade` 作为门面，统一封装了「调用 AI → 解析代码 → 保存文件」的完整流程，调用方只需传入用户消息和生成类型，无需关心底层细节。
+### 1. AI 代码生成流程
 
-### 策略模式（Strategy）
-`CodeParserExecutor` + `CodeParser` 接口，针对 HTML 模式和多文件模式分别实现不同的解析策略，支持灵活扩展新的生成类型。
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant C as Controller
+    participant F as Facade
+    participant AI as LangChain4j
+    participant P as Parser
+    participant S as Saver
+    
+    U->>C: POST /app/chat/gen/code
+    C->>F: chatToGenCode(appId, message)
+    F->>AI: 调用流式聊天模型
+    AI-->>F: 流式返回代码片段
+    F->>P: 解析代码结构
+    P->>S: 保存文件到磁盘
+    S-->>U: SSE 实时推送进度
+    Note over F,U: 完成后异步触发智能总结
+```
 
-### 模板方法模式（Template Method）
-`CodeFileSaverTemplate` 定义「构建目录 → 保存文件 → 返回目录」的标准流程，`HtmlCodeFileSaverTemplate` 和 `MultiFileCodeFileSaverTemplate` 作为子类只需实现具体的文件写入逻辑。
+**关键特性**:
+- ✅ **流式输出**: 用户可实时看到 AI "打字"过程
+- ✅ **结构化解析**: 自动识别 HTML/CSS/JS 代码块
+- ✅ **错误重试**: 输出护栏检测失败后自动重试
+- ✅ **异步总结**: 达到阈值后后台生成会议纪要
 
-### 智能记忆管理
-- 每个应用（`appId`）拥有独立的 `MessageWindowChatMemory`，存储在 Redis 中，最多保留 20 条最近消息。
-- 当未总结对话达到 **10 轮**时，异步触发 AI 生成总结，总结以「会议纪要」格式存入 `chat_summary` 表，并将已总结的早期对话标记压缩，保留最近 **5 轮**完整对话。
-- 下次加载记忆时，会先注入最新总结作为上下文，再追加最近的未总结消息，兼顾上下文完整性与 Token 效率。
+### 2. 应用部署与自动截图
+
+```mermaid
+flowchart TD
+    A[用户点击部署] --> B{检查代码目录}
+    B -->|不存在| C[返回错误]
+    B -->|存在| D{是否为Vue项目}
+    D -->|是| E[执行 npm run build]
+    D -->|否| F[直接复制文件]
+    E --> G[复制 dist 目录到部署区]
+    F --> G
+    G --> H[生成 deployKey]
+    H --> I[更新数据库 deployedTime]
+    I --> J[异步触发截图任务]
+    J --> K[启动 Headless Chrome]
+    K --> L[访问应用 URL]
+    L --> M[截取全屏并压缩]
+    M --> N[上传到腾讯云 COS]
+    N --> O[更新 app.cover 字段]
+    O --> P[清理本地临时文件]
+```
+
+**优化点**:
+- 🚀 **虚拟线程**: Java 21 虚拟线程处理异步截图,不阻塞主流程
+- 🖼️ **封面兜底**: 截图失败或 cover 为空时返回 `/images/Mango.png`
+- 🗑️ **资源清理**: 删除应用时同步删除 COS 文件 + 定时清理本地临时文件
+
+### 3. 智能记忆管理
+
+```mermaid
+graph LR
+    A[用户发送消息] --> B[加载 Redis 记忆]
+    B --> C{是否有最新总结}
+    C -->|有| D[注入总结作为上下文]
+    C -->|无| E[直接加载历史消息]
+    D --> F[追加最近5轮未总结消息]
+    E --> F
+    F --> G[调用 AI 生成回复]
+    G --> H[保存对话到 chat_history]
+    H --> I{未总结消息 >= 10}
+    I -->|是| J[异步触发总结任务]
+    I -->|否| K[结束]
+    J --> L[AI 生成会议纪要]
+    L --> M[保存到 chat_summary]
+    M --> N[标记早期消息为已总结]
+```
+
+**优势**:
+- 💰 **节省 Token**: 总结替代大量历史消息,减少 60-80% Token 消耗
+- 🎯 **保持上下文**: 总结包含关键决策点,AI 不会"失忆"
+- ⚡ **异步非阻塞**: 总结在后台执行,不影响用户体验
+
+### 4. LangGraph4j 工作流 (高级特性)
+
+项目集成了 LangGraph4j,支持可视化编排复杂 AI Agent 工作流:
+
+**典型工作流**:
+```
+用户输入 → Prompt增强 → 代码生成 → 质量检查 → {通过? 保存 : 重试}
+                                    ↓
+                              图像资源收集 (并行)
+                                    ↓
+                              Logo + 插图 + 图表
+                                    ↓
+                              聚合结果 → 返回用户
+```
+
+**节点说明**:
+- `PromptEnhancerNode`: 使用 AI 优化用户原始提示词
+- `CodeGeneratorNode`: 调用大模型生成代码
+- `CodeQualityCheckNode`: AI 审查代码规范/安全性
+- `ImageCollectorNode`: 并行收集各类图像资源
+- `RouterNode`: 根据条件路由到不同分支
 
 ---
 
-## SQL 文件说明
+## 🧪 测试指南
 
-| 文件 | 说明 |
-|---|---|
-| `sql/create_table.sql` | 全量建库建表脚本（含初始测试数据） |
-| `sql/alter_table_add_login_fields.sql` | 旧库迁移：user 表添加手机/微信字段 |
-| `sql/alter_table_add_total_rounds.sql` | 旧库迁移：app 表添加 totalRounds 字段 |
-| `sql/alter_table_add_chat_summary.sql` | 旧库迁移：添加 chat_history 总结字段 + 创建 chat_summary 表 |
+### 单元测试
 
-> **新建项目**只需执行 `create_table.sql`；已有旧库则按需执行对应 `alter_table_*.sql` 迁移脚本。
+```bash
+# 运行所有测试
+mvn test
+
+# 运行特定测试类
+mvn test -Dtest=WebScreenshotUtilsTest
+```
+
+### API 测试
+
+1. **Swagger UI**: `http://localhost:8123/api/doc.html`
+2. **Postman**: 导入 OpenAPI 规范文件
+3. **curl 示例**:
+
+```bash
+# 创建应用
+curl -X POST http://localhost:8123/api/app/add \
+  -H "Content-Type: application/json" \
+  -d '{"initPrompt": "创建一个待办事项清单应用"}' \
+  -H "Cookie: YOUR_SESSION_ID"
+
+# 流式生成代码 (SSE)
+curl -N http://localhost:8123/api/app/chat/gen/code?appId=1234567890&message="添加删除功能" \
+  -H "Cookie: YOUR_SESSION_ID"
+
+# 部署应用
+curl -X POST http://localhost:8123/api/app/deploy \
+  -H "Content-Type: application/json" \
+  -d '{"appId": 1234567890}' \
+  -H "Cookie: YOUR_SESSION_ID"
+
+# 下载代码
+curl -O http://localhost:8123/api/app/download/1234567890 \
+  -H "Cookie: YOUR_SESSION_ID"
+```
+
+详细测试文档请查看:
+- [封面图优化测试指南](docs/cover-image-optimization.md)
+- [应用代码下载测试指南](docs/app-code-download-test-guide.md)
+- [智能记忆测试指南](docs/SMART_MEMORY_TEST_GUIDE.md)
 
 ---
 
-## 默认账号
+## 📊 监控与运维
 
-执行 `create_table.sql` 后会自动插入以下测试账号（密码未加密，仅作示例，生产环境请修改）：
+### Prometheus 监控
 
-| 账号 | 密码 | 角色 |
-|---|---|---|
-| admin | 123456 | admin |
-| huge | 123456 | user |
-| maiko | 123456 | user |
+```bash
+# 查看监控指标
+curl http://localhost:8123/api/actuator/prometheus
+
+# 常用指标
+- jvm_memory_used_bytes: JVM 内存使用
+- http_server_requests_seconds: HTTP 请求耗时
+- hikaricp_connections_active: 数据库连接池状态
+```
+
+### 日志管理
+
+```bash
+# 查看实时日志
+tail -f logs/application.log
+
+# 搜索关键操作
+grep "应用封面更新成功" logs/application.log
+grep "临时文件清理任务" logs/application.log
+```
+
+### 定时任务
+
+**FileCleanupTask** 每天凌晨 2:00 自动执行:
+- 清理 `tmp/screenshots` 超过 3 天的文件
+- 清理 `tmp/code_output` 超过 7 天的文件
+
+手动触发:
+```java
+@Resource
+private FileCleanupTask fileCleanupTask;
+
+fileCleanupTask.manualCleanup();
+```
 
 ---
 
-## 注意事项
+## 🔧 常见问题
 
-1. **API Key 安全**：所有敏感配置（AI API Key、微信 Secret）请放在 `application-local.yml` 中，该文件已被 `.gitignore` 忽略，严禁提交到公开仓库。
-2. **短信服务**：手机验证码功能当前为**测试模式**，验证码会打印在后端日志中。生产环境需集成阿里云/腾讯云短信服务。
-3. **部署路径**：生成的代码默认输出到项目根目录下的 `tmp/code_output/`，部署后复制到 `tmp/code_deploy/`。
-4. **流式接口**：`/app/chat/gen/code` 为 SSE 流式接口，Swagger 文档中无法直接测试，建议使用浏览器或 Postman 的 SSE 模式调试。
+### Q1: 流式接口在 Swagger 中无法测试?
+
+**A**: SSE 流式接口需要使用浏览器或 Postman 的 SSE 模式,Swagger UI 不支持流式响应。
+
+### Q2: 截图失败怎么办?
+
+**A**: 
+1. 检查 Chrome 是否安装 (WebDriverManager 会自动下载驱动)
+2. 查看日志: `grep "异步更新应用封面失败" logs/application.log`
+3. 定时任务会自动重试失败的截图
+
+### Q3: 如何切换 AI 模型?
+
+**A**: 修改 `application-local.yml` 中的 `base-url` 和 `api-key`,支持 DeepSeek/Qwen/OpenAI 等兼容 OpenAI 接口的模型。
+
+### Q4: 默认账号是什么?
+
+**A**: 执行 `create_table.sql` 后会插入测试账号:
+- admin / 123456 (管理员)
+- huge / 123456 (普通用户)
+- maiko / 123456 (普通用户)
+
+### Q5: 如何自定义默认封面?
+
+**A**: 替换 `src/main/resources/static/images/Mango.png` 文件,或修改 `AppConstant.DEFAULT_COVER_URL` 常量。
 
 ---
 
-## License
+## 📝 开发规范
 
-本项目仅用于学习交流，请勿用于商业用途。
+### 代码风格
+- 遵循阿里巴巴 Java 开发手册
+- 使用 Lombok 简化 POJO
+- 统一异常处理 (GlobalExceptionHandler)
+- 参数校验使用 `ThrowUtils.throwIf()`
+
+### Git 提交规范
+```git
+feat: 新功能
+fix: 修复bug
+docs: 文档更新
+style: 代码格式调整
+refactor: 重构
+test: 测试相关
+chore: 构建/工具链相关
+```
+
+### 分支策略
+- `main`: 生产环境分支
+- `dev`: 开发环境分支
+- `feature/*`: 功能分支
+
+---
+
+## 🚢 部署指南
+
+### Docker 部署 (推荐)
+
+```dockerfile
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY target/maiko-ai-code-mother-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8123
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+```bash
+# 构建镜像
+docker build -t maiko-ai-code-mother .
+
+# 运行容器
+docker run -d \
+  -p 8123:8123 \
+  -v ./logs:/app/logs \
+  -v ./tmp:/app/tmp \
+  --env-file .env \
+  maiko-ai-code-mother
+```
+
+### 生产环境注意事项
+
+1. **修改默认密码**: 立即更改测试账号密码
+2. **配置 HTTPS**: 使用 Nginx 反向代理 + SSL 证书
+3. **数据库备份**: 定期备份 MySQL 数据
+4. **COS 权限**: 限制 AK/SK 权限,仅允许必要操作
+5. **限流保护**: 对敏感接口 (如发送验证码) 增加限流
+6. **日志归档**: 配置 logback 滚动策略,避免磁盘爆满
+
+---
+
+## 📚 相关文档
+
+- [封面图优化与资源管理](docs/cover-image-optimization.md) - 封面兜底/云端清理/定时任务
+- [应用代码下载测试指南](docs/app-code-download-test-guide.md) - Swagger/Postman/curl 测试
+- [智能记忆测试指南](docs/SMART_MEMORY_TEST_GUIDE.md) - 记忆总结机制详解
+- [登录功能快速上手](docs/LOGIN_QUICK_START.md) - 三种登录方式配置
+- [功能测试指南](docs/FEATURE_TEST_GUIDE.md) - 完整功能测试清单
+
+---
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request!
+
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'feat: add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+---
+
+## 📄 License
+
+本项目仅用于学习交流,请勿用于商业用途。
+
+---
+
+## 👨‍💻 作者
+
+**代码卡壳 Maiko7**
+
+- GitHub: [@Maiko7](https://github.com/Maiko7)
+- 博客: [CSDN](https://blog.csdn.net/weixin_44146541?spm=1000.2115.3001.5343)
+
+---
+
+## 🌟 Star History
+
+如果这个项目对你有帮助,请给个 Star ⭐ 支持一下!
+
+---
+
+**最后更新时间**: 2026-04-19
