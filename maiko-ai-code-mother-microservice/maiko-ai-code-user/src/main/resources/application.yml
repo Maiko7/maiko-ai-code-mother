@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: maiko-ai-code-mother
+  # session配置
+  session:
+    store-type: redis
+    # session 30天过期
+    timeout: 259200
+  # mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/maiko_ai_code_mother?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      #      password: 123456
+      password:
+      database: 0
+      timeout: 5000ms
+      ttl: 3600
+  #      username: default
+  profiles:
+    active: local
+server:
+  port: 8124
+  servlet:
+    context-path: /api
+    # 30 days expire
+    session:
+      cookie:
+        max-age: 2592000
+# springdoc-openapi
+springdoc:
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.maiko.maikoaicodeuser.controller
+# knife4j
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
