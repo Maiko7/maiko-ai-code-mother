@@ -1,7 +1,7 @@
 package com.maiko.maikoaicodemother.ai;
 
 
-import com.maiko.maikoaicodeuser.model.enums.CodeGenTypeEnum;
+import com.maiko.maikoaicodemother.model.enums.CodeGenTypeEnum;
 import dev.langchain4j.service.SystemMessage;
 
 /**
