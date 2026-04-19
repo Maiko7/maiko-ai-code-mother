@@ -34,6 +34,15 @@
             <artifactId>webdrivermanager</artifactId>
             <version>6.1.0</version>
         </dependency>
+        <!-- Dubbo -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-nacos-spring-boot-starter</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.maiko</groupId>
             <artifactId>maiko-ai-code-common</artifactId>
