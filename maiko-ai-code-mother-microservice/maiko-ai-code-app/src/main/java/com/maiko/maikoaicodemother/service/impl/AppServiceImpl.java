@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppService{
 
     @Resource
+    @Lazy
     private InnerUserService userService;
 
     @Resource

@@ -1,0 +1,11 @@
+### Example user template template
+### Example user template
+
+### CUSTOM ###
+application-local.yml
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen

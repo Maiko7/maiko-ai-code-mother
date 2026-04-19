@@ -47,9 +47,6 @@ public class RateLimitAspect {
     /**
      * 注入用户服务，用于获取当前登录用户信息（USER 维度限流时使用）
      */
-    @Resource
-    @Lazy
-    private InnerUserService userService;
 
     /**
      * 前置通知：在目标方法执行前进行限流检查
