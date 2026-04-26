@@ -54,24 +54,45 @@ public class AiModelMonitorListener implements ChatModelListener {
      */
     @Override
     public void onRequest(ChatModelRequestContext requestContext) {
-        // 1. 记录开始时间
         Instant startTime = Instant.now();
         requestContext.attributes().put(REQUEST_START_TIME_KEY, startTime);
 
-        // 2. 获取业务上下文（注意：这里假设 MonitorContextHolder 已正确实现 ThreadLocal 管理）
         MonitorContext monitorContext = MonitorContextHolder.getContext();
 
-        // 3. 将上下文存入属性，供 onResponse 或 onError 使用（跨方法传递数据）
+        if (monitorContext == null) {
+            log.debug("监控上下文为空，跳过监控记录");
+            return;
+        }
+
         requestContext.attributes().put(MONITOR_CONTEXT_KEY, monitorContext);
 
-        // 4. 提取关键信息
         String userId = monitorContext.getUserId();
         String appId = monitorContext.getAppId();
         String modelName = requestContext.chatRequest().modelName();
 
-        // 5. 记录请求发起指标
         aiModelMetricsCollector.recordRequest(userId, appId, modelName, "started");
     }
+
+//    @Override
+//    public void onRequest(ChatModelRequestContext requestContext) {
+//        // 1. 记录开始时间
+//        Instant startTime = Instant.now();
+//        requestContext.attributes().put(REQUEST_START_TIME_KEY, startTime);
+//
+//        // 2. 获取业务上下文（注意：这里假设 MonitorContextHolder 已正确实现 ThreadLocal 管理）
+//        MonitorContext monitorContext = MonitorContextHolder.getContext();
+//
+//        // 3. 将上下文存入属性，供 onResponse 或 onError 使用（跨方法传递数据）
+//        requestContext.attributes().put(MONITOR_CONTEXT_KEY, monitorContext);
+//
+//        // 4. 提取关键信息
+//        String userId = monitorContext.getUserId();
+//        String appId = monitorContext.getAppId();
+//        String modelName = requestContext.chatRequest().modelName();
+//
+//        // 5. 记录请求发起指标
+//        aiModelMetricsCollector.recordRequest(userId, appId, modelName, "started");
+//    }
 
     /**
      * 请求成功返回时触发

@@ -15,6 +15,11 @@ import java.util.regex.Pattern;
  * 主要用于防止提示词注入攻击、越狱尝试以及恶意指令，确保大模型在安全的上下文中运行。
  * </p>
  *
+ * 存在的问题：
+ * 硬编码：SENSITIVE_WORDS、长度限制1000。
+ * 匹配逻辑太简单：敏感词是 hack，攻击者输入 ha ck 或者 h@ck，你的代码就检测不到了。
+ * 缺少“多模态”防御：如果用户在图片里写了“忽略之前的指令”，你的代码完全看不见。
+ *
  * @author Maiko7
  */
 public class PromptSafetyInputGuardrail implements InputGuardrail {
@@ -26,7 +31,11 @@ public class PromptSafetyInputGuardrail implements InputGuardrail {
      * 例如：“忽略之前的指令”、“越狱”、“破解”等。
      * </p>
      */
-    private static final List<String> SENSITIVE_WORDS = Arrays.asList(
+//    private static final List<String> SENSITIVE_WORDS = Arrays.asList(
+//            "忽略之前的指令", "ignore previous instructions", "ignore above",
+//            "破解", "hack", "绕过", "bypass", "越狱", "jailbreak"
+//    );
+    private static final List<String> SENSITIVE_WORDS = List.of(
             "忽略之前的指令", "ignore previous instructions", "ignore above",
             "破解", "hack", "绕过", "bypass", "越狱", "jailbreak"
     );
@@ -67,17 +76,19 @@ public class PromptSafetyInputGuardrail implements InputGuardrail {
      */
     @Override
     public InputGuardrailResult validate(UserMessage userMessage) {
+        // 从用户消息对象中提取纯文本内容，作为后续安全检查的输入源
         String input = userMessage.singleText();
 
-        // 1. 检查输入长度，防止资源耗尽（DoS）
+        // 1. 检查是否为空
+        if (input == null || input.trim().isEmpty()) {
+            return fatal("输入内容不能为空");
+        }
+
+        // 2. 检查输入长度，防止资源耗尽（DoS）
         if (input.length() > 1000) {
             return fatal("输入内容过长，不要超过 1000 字");
         }
 
-        // 2. 检查是否为空
-        if (input.trim().isEmpty()) {
-            return fatal("输入内容不能为空");
-        }
 
         // 3. 检查敏感词（简单字符串包含匹配）
         String lowerInput = input.toLowerCase();

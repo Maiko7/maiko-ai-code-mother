@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -48,6 +49,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/app")
 @Tag(name = "应用管理", description = "应用创建、更新、删除、查询等接口")
+@Slf4j
 public class AppController {
 
     @Resource
@@ -155,7 +157,19 @@ public class AppController {
                                 .event("done")
                                 .data("")
                                 .build()
-                ));
+                )) .onErrorResume(error -> {
+                    log.error("SSE流式输出异常", error);
+                    Map<String, String> errorWrapper = Map.of("error", error.getMessage());
+                    ServerSentEvent<String> errorEvent = ServerSentEvent.<String>builder()
+                            .event("error")
+                            .data(JSONUtil.toJsonStr(errorWrapper))
+                            .build();
+                    ServerSentEvent<String> doneEvent = ServerSentEvent.<String>builder()
+                            .event("done")
+                            .data("")
+                            .build();
+                    return Flux.just(errorEvent, doneEvent);
+                });
     }
 
     /**
