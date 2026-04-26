@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>语绘界面 AI 零代码系统生成平台 - 功能模块图</title>
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+
+      body {
+          background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          padding: 40px 20px;
+          min-height: 100vh;
+      }
+
+      .container {
+          max-width: 1400px;
+          margin: 0 auto;
+      }
+
+      /* 标题区域 */
+      .header {
+          text-align: center;
+          margin-bottom: 50px;
+      }
+
+      .main-title {
+          font-size: 32px;
+          font-weight: bold;
+          color: #1a1a2e;
+          letter-spacing: 1px;
+          position: relative;
+          display: inline-block;
+          padding-bottom: 15px;
+      }
+
+      .main-title::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80px;
+          height: 3px;
+          background: linear-gradient(90deg, #667eea, #764ba2);
+          border-radius: 2px;
+      }
+
+      /* 模块网格布局 */
+      .modules-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+      }
+
+      /* 第一行：三个模块 */
+      .row-top {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 25px;
+      }
+
+      /* 第二行：三个模块 */
+      .row-bottom {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 25px;
+      }
+
+      /* 卡片通用样式 */
+      .module-card {
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .module-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-header {
+          padding: 18px 20px;
+          font-size: 20px;
+          font-weight: bold;
+          color: white;
+          text-align: center;
+          letter-spacing: 1px;
+      }
+
+      .card-body {
+          padding: 20px 20px 24px;
+          background: #fefefe;
+      }
+
+      .section {
+          margin-bottom: 20px;
+      }
+
+      .section-title {
+          font-size: 16px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 12px;
+          padding-left: 10px;
+          border-left: 4px solid;
+      }
+
+      .section-items {
+          list-style: none;
+          padding-left: 14px;
+      }
+
+      .section-items li {
+          font-size: 18px;
+          color: #444;
+          line-height: 1.9;
+          position: relative;
+          padding-left: 16px;
+      }
+
+      .section-items li::before {
+          content: "•";
+          position: absolute;
+          left: 0;
+          color: #888;
+          font-size: 16px;
+      }
+
+      /* 没有二级标题的直接列表 */
+      .direct-list {
+          list-style: none;
+          padding-left: 14px;
+      }
+      .direct-list li {
+          font-size: 14px;
+          color: #444;
+          line-height: 2.0;
+          position: relative;
+          padding-left: 16px;
+      }
+      .direct-list li::before {
+          content: "•";
+          position: absolute;
+          left: 0;
+          color: #888;
+          font-size: 16px;
+      }
+
+      /* 模块颜色 */
+      .app-header { background: linear-gradient(135deg, #f5b042, #f59e0b); }
+      .chat-header { background: linear-gradient(135deg, #6fbf4c, #4caf50); }
+      .monitor-header { background: linear-gradient(135deg, #4f9fcf, #3b82f6); }
+      .ai-header { background: linear-gradient(135deg, #f48c5e, #f97316); }
+      .user-header { background: linear-gradient(135deg, #8bc34a, #689f38); }
+      .opt-header { background: linear-gradient(135deg, #e99d9d, #ef4444); }
+
+      .section-title-app { border-left-color: #f59e0b; }
+      .section-title-chat { border-left-color: #4caf50; }
+      .section-title-monitor { border-left-color: #3b82f6; }
+      .section-title-ai { border-left-color: #f97316; }
+      .section-title-user { border-left-color: #689f38; }
+      .section-title-opt { border-left-color: #ef4444; }
+
+      hr {
+          margin: 12px 0;
+          border: none;
+          border-top: 1px solid #eee;
+      }
+
+      /* 响应式 */
+      @media (max-width: 900px) {
+          .row-top, .row-bottom {
+              grid-template-columns: 1fr;
+              gap: 20px;
+          }
+          .main-title {
+              font-size: 24px;
+          }
+          body {
+              padding: 20px 15px;
+          }
+          .section-items li, .direct-list li {
+              font-size: 15px;
+              line-height: 2.0;
+          }
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="main-title">语绘界面 AI 零代码系统生成平台 - 功能模块图</div>
+  </div>
+
+  <div class="modules-grid">
+    <!-- 第一行三个模块 -->
+    <div class="row-top">
+      <!-- 应用模块 -->
+      <div class="module-card">
+        <div class="card-header app-header">📦 应用模块</div>
+        <div class="card-body">
+          <div class="section">
+            <div class="section-title section-title-app">用户基础功能</div>
+            <ul class="section-items">
+              <li>创建应用</li>
+              <li>编辑应用信息</li>
+              <li>删除自己的应用</li>
+              <li>查看应用详情</li>
+              <li>分页查询自己的应用列表</li>
+              <li>查看筛选的应用列表</li>
+            </ul>
+          </div>
+          <div class="section">
+            <div class="section-title section-title-app">用户高级功能</div>
+            <ul class="section-items">
+              <li>实时查看应用效果</li>
+              <li>应用部署</li>
+              <li>应用封面生成</li>
+              <li>可视化编辑应用</li>
+              <li>应用代码下载</li>
+            </ul>
+          </div>
+          <div class="section">
+            <div class="section-title section-title-app">管理功能</div>
+            <ul class="section-items">
+              <li>管理所有应用</li>
+              <li>设置筛选应用</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 对话历史模块 -->
+      <div class="module-card">
+        <div class="card-header chat-header">💬 对话历史模块</div>
+        <div class="card-body">
+          <div class="section">
+            <div class="section-title section-title-chat">对话管理</div>
+            <ul class="section-items">
+              <li>保存用户消息</li>
+              <li>保存 AI 回复消息</li>
+              <li>游标分页查询对话历史</li>
+              <li>删除对话记录</li>
+            </ul>
+          </div>
+          <div class="section">
+            <div class="section-title section-title-chat">对话记忆</div>
+            <ul class="section-items">
+              <li>Redis 持久化会话记忆</li>
+              <li>多轮对话上下文保持</li>
+              <li>按应用顺序对话记忆</li>
+              <li>从数据库加载历史对话</li>
+              <li>对话记忆 TTL</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 监控模块 -->
+      <div class="module-card">
+        <div class="card-header monitor-header">📊 监控模块</div>
+        <div class="card-body">
+          <div class="section">
+            <div class="section-title section-title-monitor">ARMS 系统监控</div>
+            <ul class="section-items">
+              <li>Java 应用性能监控</li>
+              <li>应用调用链路追踪</li>
+              <li>异常分析诊断</li>
+              <li>网络请求性能监控</li>
+              <li>资源池监控</li>
+            </ul>
+          </div>
+          <div class="section">
+            <div class="section-title section-title-monitor">Prometheus 自定义监控</div>
+            <ul class="section-items">
+              <li>Token 消耗监控</li>
+              <li>AI 调用成功率监控</li>
+            </ul>
+          </div>
+          <div class="section">
+            <ul class="section-items">
+              <li>AI 调用日志入库</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二行三个模块 -->
+    <div class="row-bottom">
+      <!-- AI 代码生成模块 -->
+      <div class="module-card">
+        <div class="card-header ai-header">🤖 AI 代码生成模块</div>
+        <div class="card-body">
+          <ul class="direct-list">
+            <li>原生 HTML 项目生成</li>
+            <li>原生多文件项目生成</li>
+            <li>Vue 工程目录生成</li>
+            <li>AI 智能选择生成方案</li>
+            <li>AI 工作流项目生成</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 用户模块 -->
+      <div class="module-card">
+        <div class="card-header user-header">👤 用户模块</div>
+        <div class="card-body">
+          <ul class="direct-list">
+            <li>用户注册</li>
+            <li>用户登录</li>
+            <li>用户注销</li>
+            <li>获取当前登录用户信息</li>
+            <li>用户权限控制</li>
+            <li>管理用户</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 系统优化 -->
+      <div class="module-card">
+        <div class="card-header opt-header">⚡ 系统优化</div>
+        <div class="card-body">
+          <ul class="direct-list">
+            <li>性能优化</li>
+            <li>安全优化</li>
+            <li>流量保护</li>
+            <li>成本优化</li>
+            <li>稳定性优化</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
